@@ -77,9 +77,14 @@ def run_cell(model_alias, model_path, mode, case, python_bin: str) -> None:
     print(f"[run ] {tag}")
 
     # 1. Profile: 1 warmup + 1 measured generate inside worker.py.
+    #    --cuda-graph-trace=node records each kernel node INSIDE CUDA graphs; the
+    #    default ("graph") logs only one entry per graph launch, which leaves the
+    #    KERNEL table empty for cudagraph decode (and, for large MoEs, prevents
+    #    the device buffer from filling so nothing flushes). Harmless in eager.
     sh([
         "nsys", "profile",
         "--trace=cuda,nvtx",
+        "--cuda-graph-trace=node",
         "--sample=none", "--cpuctxsw=none",
         "--force-overwrite=true",
         "--output", str(rep),
