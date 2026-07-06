@@ -1,0 +1,21 @@
+# Downloaded model weights (large; fetched via envs/download_models.py)
+models/
+
+# nsys采集的大文件：原始产物与压缩包不入库（本地下载分析）
+kernel_launch/**/results/_work/
+kernel_launch/**/results/nsys/
+*.nsys-rep
+*.nsys-rep.gz
+*.sqlite
+*.sqlite.gz
+
+# 运行日志
+kernel_launch/**/logs/*.log
+
+# Python / OS
+__pycache__/
+*.pyc
+.DS_Store
+
+# 保留空目录占位
+!.gitkeep
