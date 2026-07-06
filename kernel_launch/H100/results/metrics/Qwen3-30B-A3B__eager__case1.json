@@ -1,0 +1,70 @@
+{
+  "model": "Qwen3-30B-A3B",
+  "mode": "eager",
+  "case": "case1",
+  "prompt_len": 256,
+  "decode_len": 0,
+  "e2e_ns": 86749036,
+  "e2e_ms": 86.749036,
+  "total_kernels": 1048,
+  "total_kernel_gpu_ns": 6343762,
+  "total_kernel_gpu_ms": 6.343762,
+  "launch_count": 1097,
+  "launch_overhead_ns": 7127633,
+  "launch_overhead_ms": 7.127633,
+  "launch_overhead_pct": 8.21638294631885,
+  "launch_by_api": {
+    "cuLaunchKernel": {
+      "count": 48,
+      "overhead_ns": 278501
+    },
+    "cuLaunchKernelEx": {
+      "count": 246,
+      "overhead_ns": 1488684
+    },
+    "cudaGraphLaunch_v10000": {
+      "count": 49,
+      "overhead_ns": 721962
+    },
+    "cudaLaunchKernelExC_v11060": {
+      "count": 484,
+      "overhead_ns": 2917191
+    },
+    "cudaLaunchKernel_v7000": {
+      "count": 270,
+      "overhead_ns": 1721295
+    }
+  },
+  "top5_kernels": [
+    {
+      "name": "fused_moe_kernel",
+      "count": 96,
+      "gpu_ns": 1515579,
+      "gpu_ms": 1.515579
+    },
+    {
+      "name": "PersistentVariableLengthMergeStatesKernel",
+      "count": 96,
+      "gpu_ns": 1163294,
+      "gpu_ms": 1.163294
+    },
+    {
+      "name": "BatchPrefillWithPagedKVCacheKernel",
+      "count": 96,
+      "gpu_ns": 824190,
+      "gpu_ms": 0.82419
+    },
+    {
+      "name": "nvjet_sm90_tst_64x8_64x16_4x1_v_bz_TNT",
+      "count": 48,
+      "gpu_ns": 459743,
+      "gpu_ms": 0.459743
+    },
+    {
+      "name": "nvjet_sm90_tst_384x8_64x4_2x1_v_bz_TNT",
+      "count": 2,
+      "gpu_ns": 408703,
+      "gpu_ms": 0.408703
+    }
+  ]
+}
