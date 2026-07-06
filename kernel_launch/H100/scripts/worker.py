@@ -93,7 +93,16 @@ def main() -> int:
     for _ in range(40):
         engine.generate(input_ids=flush_ids, sampling_params=flush_sp)
     time.sleep(2)
-    engine.shutdown()
+
+    # shutdown() teardown is best-effort: for large MoEs SGLang spawns many
+    # compile/expert workers that nsys keeps from being reaped within its 60s
+    # SIGKILL window, so shutdown() raises. The profiling data is already
+    # captured by this point, and the stuck processes die once nsys detaches on
+    # exit -- so a shutdown failure must not fail the cell.
+    try:
+        engine.shutdown()
+    except Exception as e:
+        print(f"[warn] engine.shutdown() non-fatal error: {e}")
     return 0
 
 
