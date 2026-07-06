@@ -34,7 +34,14 @@ def sh(cmd: list[str], log_path: Path) -> None:
         log.flush()
         proc = subprocess.run(cmd, stdout=log, stderr=subprocess.STDOUT)
     if proc.returncode != 0:
-        raise SystemExit(f"Command failed ({proc.returncode}), see {log_path}: {' '.join(cmd)}")
+        raise RuntimeError(f"Command failed ({proc.returncode}), see {log_path}: {' '.join(cmd)}")
+
+
+def cleanup_work(tag: str) -> None:
+    """Drop any partial raw rep/sqlite for a tag so a retry starts clean."""
+    work = Path(C.WORK_DIR)
+    for p in work.glob(f"{tag}.*"):
+        p.unlink()
 
 
 def gzip_into(src: Path, dst_gz: Path) -> None:
@@ -114,6 +121,7 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
+    failures = []
     for model_alias, model_path, mode, case in C.combos():
         if args.models and model_alias not in args.models:
             continue
@@ -121,8 +129,21 @@ def main() -> int:
             continue
         if args.cases and case["id"] not in args.cases:
             continue
-        run_cell(model_alias, model_path, mode, case, args.python)
-    print("All requested cells complete.")
+        tag = C.run_tag(model_alias, mode, case["id"])
+        # Retry once: nsys/CUPTI flush can occasionally drop the kernel table.
+        for attempt in (1, 2):
+            try:
+                run_cell(model_alias, model_path, mode, case, args.python)
+                break
+            except Exception as e:
+                print(f"[fail {attempt}/2] {tag}: {e}")
+                cleanup_work(tag)
+                if attempt == 2:
+                    failures.append(tag)
+    if failures:
+        print(f"Completed with {len(failures)} failed cell(s): {failures}")
+    else:
+        print("All requested cells complete.")
     return 0
 
 

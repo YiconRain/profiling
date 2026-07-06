@@ -80,6 +80,19 @@ def main() -> int:
         "mode": args.mode,
     }))
 
+    # Force CUPTI device-activity buffers to flush. On CUDA 11+ nsys only saves
+    # a device buffer when it FILLS; a short measure region (e.g. a single
+    # prefill) never fills one, so its kernel records would be dropped when the
+    # SGLang scheduler subprocess is killed -- the export then lacks the
+    # CUPTI_ACTIVITY_KIND_KERNEL table entirely. Running extra cheap generates
+    # after the NVTX window fills the buffer; the resulting buffer-full flush
+    # also delivers the measured kernels. This work is outside 'measure', so the
+    # analysis window (filtered by NVTX time) excludes it.
+    flush_ids = input_ids[:16]
+    flush_sp = {"temperature": 0.0, "max_new_tokens": 1, "ignore_eos": True}
+    for _ in range(40):
+        engine.generate(input_ids=flush_ids, sampling_params=flush_sp)
+    time.sleep(2)
     engine.shutdown()
     return 0
 
