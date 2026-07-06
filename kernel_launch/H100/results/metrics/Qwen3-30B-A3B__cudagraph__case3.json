@@ -4,15 +4,63 @@
   "case": "case3",
   "prompt_len": 8192,
   "decode_len": 0,
-  "e2e_ns": 215815676,
-  "e2e_ms": 215.815676,
-  "total_kernels": 0,
-  "total_kernel_gpu_ns": 0,
-  "total_kernel_gpu_ms": 0.0,
-  "launch_count": 0,
-  "launch_overhead_ns": 0,
-  "launch_overhead_ms": 0.0,
-  "launch_overhead_pct": 0.0,
-  "launch_by_api": {},
-  "top5_kernels": []
+  "e2e_ns": 216639525,
+  "e2e_ms": 216.639525,
+  "total_kernels": 1677,
+  "total_kernel_gpu_ns": 206880991,
+  "total_kernel_gpu_ms": 206.880991,
+  "launch_count": 233,
+  "launch_overhead_ns": 3858622,
+  "launch_overhead_ms": 3.858622,
+  "launch_overhead_pct": 1.7811255817699934,
+  "launch_by_api": {
+    "cuLaunchKernelEx": {
+      "count": 5,
+      "overhead_ns": 54305
+    },
+    "cudaGraphLaunch_v10000": {
+      "count": 50,
+      "overhead_ns": 2975956
+    },
+    "cudaLaunchKernelExC_v11060": {
+      "count": 51,
+      "overhead_ns": 200748
+    },
+    "cudaLaunchKernel_v7000": {
+      "count": 127,
+      "overhead_ns": 627613
+    }
+  },
+  "top5_kernels": [
+    {
+      "name": "BatchPrefillWithPagedKVCacheKernel",
+      "count": 96,
+      "gpu_ns": 89584540,
+      "gpu_ms": 89.58454
+    },
+    {
+      "name": "fused_moe_kernel",
+      "count": 192,
+      "gpu_ns": 65559712,
+      "gpu_ms": 65.559712
+    },
+    {
+      "name": "nvjet_sm90_tst_320x128_64x3_1x2_h_bz_coopB_TNT",
+      "count": 48,
+      "gpu_ns": 11894703,
+      "gpu_ms": 11.894703
+    },
+    {
+      "name": "nvjet_sm90_tst_256x128_64x4_1x2_h_bz_coopA_TNT",
+      "count": 48,
+      "gpu_ns": 9213390,
+      "gpu_ms": 9.21339
+    },
+    {
+      "name": "moe_sum_reduce_warp_per_token_vec_kernel",
+      "count": 48,
+      "gpu_ns": 4894799,
+      "gpu_ms": 4.894799
+    }
+  ]
 }

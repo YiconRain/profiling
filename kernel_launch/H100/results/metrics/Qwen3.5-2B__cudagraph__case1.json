@@ -4,63 +4,63 @@
   "case": "case1",
   "prompt_len": 256,
   "decode_len": 0,
-  "e2e_ns": 30748640,
-  "e2e_ms": 30.74864,
-  "total_kernels": 635,
-  "total_kernel_gpu_ns": 3781210,
-  "total_kernel_gpu_ms": 3.78121,
-  "launch_count": 636,
-  "launch_overhead_ns": 2853541,
-  "launch_overhead_ms": 2.853541,
-  "launch_overhead_pct": 9.280218572268561,
+  "e2e_ns": 33413774,
+  "e2e_ms": 33.413774,
+  "total_kernels": 980,
+  "total_kernel_gpu_ns": 6080732,
+  "total_kernel_gpu_ms": 6.080732,
+  "launch_count": 635,
+  "launch_overhead_ns": 3186844,
+  "launch_overhead_ms": 3.186844,
+  "launch_overhead_pct": 9.537515875937869,
   "launch_by_api": {
     "cuLaunchKernelEx": {
       "count": 323,
-      "overhead_ns": 1338006
+      "overhead_ns": 1296803
     },
     "cudaGraphLaunch_v10000": {
       "count": 1,
-      "overhead_ns": 104444
+      "overhead_ns": 508388
     },
     "cudaLaunchKernelExC_v11060": {
       "count": 106,
-      "overhead_ns": 493352
+      "overhead_ns": 484843
     },
     "cudaLaunchKernel_v7000": {
-      "count": 206,
-      "overhead_ns": 917739
+      "count": 205,
+      "overhead_ns": 896810
     }
   },
   "top5_kernels": [
     {
+      "name": "nvjet_sm90_tst_64x8_64x16_4x1_v_bz_TNT",
+      "count": 54,
+      "gpu_ns": 698552,
+      "gpu_ms": 0.698552
+    },
+    {
+      "name": "nvjet_sm90_tst_512x8_64x3_2x1_v_bz_TNT",
+      "count": 2,
+      "gpu_ns": 666717,
+      "gpu_ms": 0.666717
+    },
+    {
       "name": "nvjet_sm90_tst_192x128_64x5_1x2_h_bz_coopB_TNT",
       "count": 24,
-      "gpu_ns": 637725,
-      "gpu_ms": 0.637725
+      "gpu_ns": 640381,
+      "gpu_ms": 0.640381
     },
     {
       "name": "nvjet_sm90_tst_64x64_64x13_2x1_v_bz_TNT",
       "count": 48,
-      "gpu_ns": 551070,
-      "gpu_ms": 0.55107
-    },
-    {
-      "name": "nvjet_sm90_tst_512x8_64x3_2x1_v_bz_TNT",
-      "count": 1,
-      "gpu_ns": 333887,
-      "gpu_ms": 0.333887
+      "gpu_ns": 533470,
+      "gpu_ms": 0.53347
     },
     {
       "name": "nvjet_sm90_tst_128x128_64x6_2x1_v_bz_TNT",
       "count": 18,
-      "gpu_ns": 319008,
-      "gpu_ms": 0.319008
-    },
-    {
-      "name": "chunk_gated_delta_rule_fwd_kkt_solve_kernel",
-      "count": 18,
-      "gpu_ns": 306112,
-      "gpu_ms": 0.306112
+      "gpu_ns": 313916,
+      "gpu_ms": 0.313916
     }
   ]
 }

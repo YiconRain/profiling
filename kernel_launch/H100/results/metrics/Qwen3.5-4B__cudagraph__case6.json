@@ -4,63 +4,63 @@
   "case": "case6",
   "prompt_len": 16,
   "decode_len": 512,
-  "e2e_ns": 2129918725,
-  "e2e_ms": 2129.918725,
-  "total_kernels": 9578,
-  "total_kernel_gpu_ns": 29076617,
-  "total_kernel_gpu_ms": 29.076617,
+  "e2e_ns": 2154231099,
+  "e2e_ms": 2154.231099,
+  "total_kernels": 261480,
+  "total_kernel_gpu_ns": 2287140515,
+  "total_kernel_gpu_ms": 2287.140515,
   "launch_count": 10088,
-  "launch_overhead_ns": 78894661,
-  "launch_overhead_ms": 78.894661,
-  "launch_overhead_pct": 3.7041160338172054,
+  "launch_overhead_ns": 434154034,
+  "launch_overhead_ms": 434.154034,
+  "launch_overhead_pct": 20.153549644768173,
   "launch_by_api": {
     "cuLaunchKernelEx": {
       "count": 940,
-      "overhead_ns": 3603175
+      "overhead_ns": 4233124
     },
     "cudaGraphLaunch_v10000": {
       "count": 512,
-      "overhead_ns": 33904679
+      "overhead_ns": 383063938
     },
     "cudaLaunchKernelExC_v11060": {
       "count": 1218,
-      "overhead_ns": 5475848
+      "overhead_ns": 6328050
     },
     "cudaLaunchKernel_v7000": {
       "count": 7418,
-      "overhead_ns": 35910959
+      "overhead_ns": 40528922
     }
   },
   "top5_kernels": [
     {
-      "name": "vectorized_elementwise_kernel",
-      "count": 1647,
-      "gpu_ns": 5290166,
-      "gpu_ms": 5.290166
+      "name": "nvjet_sm90_tst_256x8_64x6_4x1_v_bz_TNT",
+      "count": 16384,
+      "gpu_ns": 568945765,
+      "gpu_ms": 568.945765
     },
     {
-      "name": "reduce_kernel",
+      "name": "nvjet_sm90_tst_64x8_64x16_4x1_v_bz_splitK_TNT",
+      "count": 32768,
+      "gpu_ns": 448640543,
+      "gpu_ms": 448.640543
+    },
+    {
+      "name": "nvjet_sm90_tst_64x8_64x16_4x1_v_bz_TNT",
+      "count": 12288,
+      "gpu_ns": 286748513,
+      "gpu_ms": 286.748513
+    },
+    {
+      "name": "nvjet_sm90_tst_64x8_64x16_1x1_h_bz_TNT",
+      "count": 12288,
+      "gpu_ns": 227741213,
+      "gpu_ms": 227.741213
+    },
+    {
+      "name": "nvjet_sm90_tst_512x8_64x3_2x1_v_bz_TNT",
       "count": 513,
-      "gpu_ns": 4284086,
-      "gpu_ms": 4.284086
-    },
-    {
-      "name": "unrolled_elementwise_kernel",
-      "count": 1547,
-      "gpu_ns": 4212249,
-      "gpu_ms": 4.212249
-    },
-    {
-      "name": "index_elementwise_kernel",
-      "count": 1044,
-      "gpu_ns": 4111799,
-      "gpu_ms": 4.111799
-    },
-    {
-      "name": "elementwise_kernel_with_index",
-      "count": 513,
-      "gpu_ns": 1206430,
-      "gpu_ms": 1.20643
+      "gpu_ns": 214230661,
+      "gpu_ms": 214.230661
     }
   ]
 }
