@@ -35,14 +35,12 @@
 > **关于 "Decode 0"**：解码器至少产出 1 个 token，因此 prefill-only 用例强制
 > `max_new_tokens=1`，该 token 与 prefill 属于同一次前向，trace 捕获到的即 prefill 阶段的 kernel。
 
-默认共 `6 模型 × 2 模式 × 6 用例 = 72` 个实验组合。加上两个减层外推的大 MoE
-（`--extrap`，见 3.4 节）则为 `8 × 2 × 6 = 96`。
+共 `6 模型 × 2 模式 × 6 用例 = 72` 个实验组合。
 
 > **为什么 MoE 用 Qwen3-30B-A3B 而非 Qwen3.5-35B-A3B**：最小的 Qwen3.5 MoE 是
 > 35B-A3B，bf16 权重约 70GB，加上 KV cache / 激活 / CUDA Graph 缓冲后放不进单张 80GB
 > H100；下一档 Qwen3.5 MoE 更是 122B 起步。因此 MoE 对照选用能装下的 Qwen3-30B-A3B
-> （约 60GB，留约 20GB 余量），它与 Qwen3.5 MoE 同为 3B 激活、架构同源。更大的
-> Qwen3.5 MoE 通过 3.4 节的减层外推来估计。
+> （约 60GB，留约 20GB 余量），它与 Qwen3.5 MoE 同为 3B 激活、架构同源。
 
 ## 3. 方法论
 
@@ -79,26 +77,6 @@ SGLang 的模型前向运行在独立的 scheduler 子进程中，而 NVTX `meas
 > launch 次数和开销都大幅下降——这正是本实验要量化的核心对比。`total_kernels`（GPU
 > 端执行次数）在两种模式下口径一致，可直接比较。
 
-### 3.4 大 MoE 的减层外推
-
-对放不进 80GB 的大 MoE（Qwen3.5-122B-A10B、Qwen3.5-397B-A17B），采用**只加载前若干层、
-再外推到全模型**的方法：
-
-1. **部分下载**：`download_models.py --model <大MoE> --layers K` 先取回权重索引
-   （`model.safetensors.index.json`），据此只下载"前 K 层 + embedding / lm_head / 末层
-   norm"所在的分片，避免下载数百 GB 的完整权重。
-2. **减层加载**：`worker.py --num-layers K` 通过 SGLang 的 `json_model_override_args`
-   把 `num_hidden_layers` 覆盖为 K，只实例化前 K 层再采集。
-3. **线性外推**：Transformer 每层启动的 kernel 数基本恒定，故按
-   `scale = 全层数 / K` 将实测 kernel 数、launch 数、launch 开销外推到全模型。
-   全层数从模型 `config.json` 的 `num_hidden_layers` 读取。
-
-该外推为**一阶近似**：它把全部实测 kernel 都当作"按层线性增长"，未单独扣除 embedding、
-采样、lm_head 等与层数无关的固定开销，因此会略微高估。默认 `K=4`（见
-`config.py: EXTRAP_MODELS`）。此路径为**可选**（`run_profiling.py --extrap` /
-`run_all.sh ... --extrap`），因为即使部分下载体量仍较大。结果单列在
-`results/README.md` 的"减层外推估计"表中，与实测结果区分开。
-
 ## 4. 目录结构
 
 ```
@@ -127,9 +105,6 @@ bash kernel_launch/H100/scripts/run_all.sh
 
 # 可选：只跑部分组合（参数透传给 run_profiling.py）
 bash kernel_launch/H100/scripts/run_all.sh --models Qwen3.5-0.8B --modes eager
-
-# 可选：额外跑大 MoE 的减层外推（会先部分下载 122B / 397B 的前 4 层分片）
-bash kernel_launch/H100/scripts/run_all.sh --extrap
 ```
 
 脚本可重入：已完成的组合（对应 `results/metrics/*.json` 已存在）会被跳过。

@@ -40,9 +40,6 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--attention-backend", default="flashinfer")
     p.add_argument("--tp", type=int, default=1)
     p.add_argument("--measure-range", default="measure")
-    p.add_argument("--num-layers", type=int, default=None,
-                   help="Override num_hidden_layers to load only the first N layers "
-                        "(reduced-layer extrapolation for oversized MoEs).")
     return p.parse_args()
 
 
@@ -50,7 +47,7 @@ def main() -> int:
     args = parse_args()
     input_ids = build_input_ids(args.model_path, args.prompt_len)
 
-    engine_kwargs = dict(
+    engine = Engine(
         model_path=args.model_path,
         attention_backend=args.attention_backend,
         disable_cuda_graph=(args.mode == "eager"),
@@ -61,12 +58,6 @@ def main() -> int:
         trust_remote_code=True,
         log_level="warning",
     )
-    # Reduced-layer profiling: instantiate only the first N decoder layers.
-    if args.num_layers is not None:
-        engine_kwargs["json_model_override_args"] = json.dumps(
-            {"num_hidden_layers": args.num_layers}
-        )
-    engine = Engine(**engine_kwargs)
 
     # decode_len == 0 -> prefill-only, still emit the single unavoidable token.
     max_new_tokens = max(args.decode_len, 1)

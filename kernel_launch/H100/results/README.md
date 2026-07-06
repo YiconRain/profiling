@@ -17,8 +17,7 @@ results/
 - `nsys/*.sqlite.gz`：解压后可用 SQL 自定义查询（表 `CUPTI_ACTIVITY_KIND_KERNEL`、
   `CUPTI_ACTIVITY_KIND_RUNTIME`、`NVTX_EVENTS`、`StringIds` 等）。
 - `metrics/summary.csv`：所有组合的关键指标，便于二次绘图。
-- 各 `metrics/*.json`：单组合完整指标，含 Top-5 kernel 明细；减层外推组合另含
-  `profile_layers` / `full_layers` / `extrapolated`（外推到全模型的 kernel、launch 估计）。
+- 各 `metrics/*.json`：单组合完整指标，含 Top-5 kernel 明细。
 
 ## 指标口径
 

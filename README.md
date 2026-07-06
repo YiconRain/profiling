@@ -30,11 +30,7 @@ python envs/download_models.py --series qwen3        # 整个 Qwen3 系列（含
 python envs/download_models.py --series all          # 两个系列全部
 python envs/download_models.py --model Qwen3-30B-A3B # 仅下载单个模型
 python envs/download_models.py --models Qwen3.5-4B Qwen3.5-2B   # 指定若干个
-
-# 大 MoE 的部分下载（只取前 4 层所在分片 + embedding/lm_head），用于减层外推
-python envs/download_models.py --model Qwen3.5-397B-A17B --layers 4
 ```
 
-模型默认下载到 `models/`（本仓库根目录下）。kernel_launch 实验默认使用 5 个 Qwen3.5
-稠密模型 + Qwen3-30B-A3B（MoE）；更大的 Qwen3.5 MoE 通过减层外推估计，详见
-`kernel_launch/H100/README.md`。
+模型默认下载到 `models/`（本仓库根目录下）。kernel_launch 实验使用 5 个 Qwen3.5
+稠密模型 + Qwen3-30B-A3B（MoE），详见 `kernel_launch/H100/README.md`。

@@ -7,7 +7,7 @@ directory (run_all.sh guarantees this).
 
 from __future__ import annotations
 
-# Full models that fit on a single 80GB H100. Alias -> local model directory
+# Target models that fit on a single 80GB H100. Alias -> local model directory
 # (relative to project root); fetched by envs/download_models.py.
 # Dense: 0.8B..27B. MoE: Qwen3-30B-A3B (30B total / 3B active) -- the smallest
 # MoE that fits (the Qwen3.5 35B MoE is ~70GB and does not), used for the
@@ -19,16 +19,6 @@ MODELS = {
     "Qwen3.5-9B": "models/Qwen3.5-9B",
     "Qwen3.5-27B": "models/Qwen3.5-27B",
     "Qwen3-30B-A3B": "models/Qwen3-30B-A3B",
-}
-
-# Large MoEs that exceed 80GB. They are downloaded partially (config + first-K
-# layer shards) and profiled with only `profile_layers` decoder layers via
-# SGLang's json_model_override_args; summarize.py extrapolates the per-layer
-# kernel/launch counts to the model's full layer count (read from config.json).
-# Opt-in only (combos(include_extrap=True)), since even a partial download is large.
-EXTRAP_MODELS = {
-    "Qwen3.5-122B-A10B": {"path": "models/Qwen3.5-122B-A10B", "profile_layers": 4},
-    "Qwen3.5-397B-A17B": {"path": "models/Qwen3.5-397B-A17B", "profile_layers": 4},
 }
 
 # Execution modes. "eager" disables CUDA graphs; "cudagraph" keeps them on.
@@ -64,21 +54,12 @@ WORK_DIR = "kernel_launch/H100/results/_work"       # transient raw rep/sqlite
 LOGS_DIR = "kernel_launch/H100/logs"
 
 
-def combos(include_extrap: bool = False):
-    """Yield (model_alias, model_path, mode, case, profile_layers) per cell.
-
-    profile_layers is None for full models and an int for reduced-layer
-    extrapolation models. Extrapolation models are included only when asked.
-    """
+def combos():
+    """Yield (model_alias, model_path, mode, case) for every experiment cell."""
     for model_alias, model_path in MODELS.items():
         for mode in MODES:
             for case in CASES:
-                yield model_alias, model_path, mode, case, None
-    if include_extrap:
-        for model_alias, spec in EXTRAP_MODELS.items():
-            for mode in MODES:
-                for case in CASES:
-                    yield model_alias, spec["path"], mode, case, spec["profile_layers"]
+                yield model_alias, model_path, mode, case
 
 
 def run_tag(model_alias: str, mode: str, case_id: str) -> str:

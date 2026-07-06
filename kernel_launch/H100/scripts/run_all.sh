@@ -28,16 +28,7 @@ echo "[run_all] nsys          : $(command -v nsys || echo 'NOT FOUND')"
 # 1. Models: the 5 Qwen3.5 dense models + Qwen3-30B-A3B (the fitting MoE).
 "$PY" envs/download_models.py --series qwen3.5 --model Qwen3-30B-A3B
 
-# 1b. If --extrap was requested, partial-download the large MoEs (first 4 layers,
-#     matching EXTRAP_MODELS.profile_layers in config.py).
-case " $* " in
-  *" --extrap "*)
-    "$PY" envs/download_models.py --model Qwen3.5-122B-A10B --layers 4
-    "$PY" envs/download_models.py --model Qwen3.5-397B-A17B --layers 4
-    ;;
-esac
-
-# 2. Profiling sweep (extra args act as filters; --extrap adds the MoEs).
+# 2. Profiling sweep (extra args act as filters).
 "$PY" kernel_launch/H100/scripts/run_profiling.py --python "$PY" "$@"
 
 # 3. Aggregate metrics -> CSV + Chinese README.
