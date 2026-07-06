@@ -1,0 +1,66 @@
+{
+  "model": "Qwen3.5-2B",
+  "mode": "cudagraph",
+  "case": "case1",
+  "prompt_len": 256,
+  "decode_len": 0,
+  "e2e_ns": 30748640,
+  "e2e_ms": 30.74864,
+  "total_kernels": 635,
+  "total_kernel_gpu_ns": 3781210,
+  "total_kernel_gpu_ms": 3.78121,
+  "launch_count": 636,
+  "launch_overhead_ns": 2853541,
+  "launch_overhead_ms": 2.853541,
+  "launch_overhead_pct": 9.280218572268561,
+  "launch_by_api": {
+    "cuLaunchKernelEx": {
+      "count": 323,
+      "overhead_ns": 1338006
+    },
+    "cudaGraphLaunch_v10000": {
+      "count": 1,
+      "overhead_ns": 104444
+    },
+    "cudaLaunchKernelExC_v11060": {
+      "count": 106,
+      "overhead_ns": 493352
+    },
+    "cudaLaunchKernel_v7000": {
+      "count": 206,
+      "overhead_ns": 917739
+    }
+  },
+  "top5_kernels": [
+    {
+      "name": "nvjet_sm90_tst_192x128_64x5_1x2_h_bz_coopB_TNT",
+      "count": 24,
+      "gpu_ns": 637725,
+      "gpu_ms": 0.637725
+    },
+    {
+      "name": "nvjet_sm90_tst_64x64_64x13_2x1_v_bz_TNT",
+      "count": 48,
+      "gpu_ns": 551070,
+      "gpu_ms": 0.55107
+    },
+    {
+      "name": "nvjet_sm90_tst_512x8_64x3_2x1_v_bz_TNT",
+      "count": 1,
+      "gpu_ns": 333887,
+      "gpu_ms": 0.333887
+    },
+    {
+      "name": "nvjet_sm90_tst_128x128_64x6_2x1_v_bz_TNT",
+      "count": 18,
+      "gpu_ns": 319008,
+      "gpu_ms": 0.319008
+    },
+    {
+      "name": "chunk_gated_delta_rule_fwd_kkt_solve_kernel",
+      "count": 18,
+      "gpu_ns": 306112,
+      "gpu_ms": 0.306112
+    }
+  ]
+}
