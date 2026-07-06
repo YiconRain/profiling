@@ -1,0 +1,238 @@
+
+$ nsys profile --trace=cuda,nvtx --sample=none --cpuctxsw=none --force-overwrite=true --output kernel_launch/H100/results/_work/Qwen3.5-9B__cudagraph__case7 /root/envs/sgl_env/bin/python /root/profiling/kernel_launch/H100/scripts/worker.py --model-path models/Qwen3.5-9B --mode cudagraph --prompt-len 16 --decode-len 1024 --attention-backend flashinfer --measure-range measure
+Failed to load generation config for models/Qwen3.5-9B: models/Qwen3.5-9B does not appear to have a file named generation_config.json. Checkout 'https://huggingface.co/models/Qwen3.5-9B/tree/main' for available files.. Proceeding without generation config.
+[2026-07-06 12:12:42] User lacks permission to set NUMA affinity, skipping NUMA node configuration for GPU. If using docker, try adding --cap-add SYS_NICE to your docker run command.
+[2026-07-06 12:12:43] Ignore import error when loading sglang.srt.multimodal.processors.mimo_v2: Could not load libtorchcodec. Likely causes:
+          1. FFmpeg is not properly installed in your environment. We support
+             versions 4, 5, 6, 7, and 8, and we attempt to load libtorchcodec
+             for each of those versions. Errors for versions not installed on
+             your system are expected; only the error for your installed FFmpeg
+             version is relevant. On Windows, ensure you've installed the
+             "full-shared" version which ships DLLs.
+          2. The PyTorch version (2.11.0+cu130) is not compatible with
+             this version of TorchCodec. Refer to the version compatibility
+             table:
+             https://github.com/pytorch/torchcodec?tab=readme-ov-file#installing-torchcodec.
+          3. Another runtime dependency; see exceptions below.
+
+        The following exceptions were raised as we tried to load libtorchcodec:
+        
+[start of libtorchcodec loading traceback]
+FFmpeg version 8:
+Traceback (most recent call last):
+  File "/root/envs/sgl_env/lib/python3.12/site-packages/torch/_ops.py", line 1503, in load_library
+    ctypes.CDLL(path)
+  File "/usr/lib/python3.12/ctypes/__init__.py", line 379, in __init__
+    self._handle = _dlopen(self._name, mode)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+OSError: libavutil.so.60: cannot open shared object file: No such file or directory
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/root/envs/sgl_env/lib/python3.12/site-packages/torchcodec/_internally_replaced_utils.py", line 93, in load_torchcodec_shared_libraries
+    torch.ops.load_library(core_library_path)
+  File "/root/envs/sgl_env/lib/python3.12/site-packages/torch/_ops.py", line 1505, in load_library
+    raise OSError(f"Could not load this library: {path}") from e
+OSError: Could not load this library: /root/envs/sgl_env/lib/python3.12/site-packages/torchcodec/libtorchcodec_core8.so
+
+FFmpeg version 7:
+Traceback (most recent call last):
+  File "/root/envs/sgl_env/lib/python3.12/site-packages/torch/_ops.py", line 1503, in load_library
+    ctypes.CDLL(path)
+  File "/usr/lib/python3.12/ctypes/__init__.py", line 379, in __init__
+    self._handle = _dlopen(self._name, mode)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+OSError: libavutil.so.59: cannot open shared object file: No such file or directory
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/root/envs/sgl_env/lib/python3.12/site-packages/torchcodec/_internally_replaced_utils.py", line 93, in load_torchcodec_shared_libraries
+    torch.ops.load_library(core_library_path)
+  File "/root/envs/sgl_env/lib/python3.12/site-packages/torch/_ops.py", line 1505, in load_library
+    raise OSError(f"Could not load this library: {path}") from e
+OSError: Could not load this library: /root/envs/sgl_env/lib/python3.12/site-packages/torchcodec/libtorchcodec_core7.so
+
+FFmpeg version 6:
+Traceback (most recent call last):
+  File "/root/envs/sgl_env/lib/python3.12/site-packages/torch/_ops.py", line 1503, in load_library
+    ctypes.CDLL(path)
+  File "/usr/lib/python3.12/ctypes/__init__.py", line 379, in __init__
+    self._handle = _dlopen(self._name, mode)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+OSError: libavutil.so.58: cannot open shared object file: No such file or directory
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/root/envs/sgl_env/lib/python3.12/site-packages/torchcodec/_internally_replaced_utils.py", line 93, in load_torchcodec_shared_libraries
+    torch.ops.load_library(core_library_path)
+  File "/root/envs/sgl_env/lib/python3.12/site-packages/torch/_ops.py", line 1505, in load_library
+    raise OSError(f"Could not load this library: {path}") from e
+OSError: Could not load this library: /root/envs/sgl_env/lib/python3.12/site-packages/torchcodec/libtorchcodec_core6.so
+
+FFmpeg version 5:
+Traceback (most recent call last):
+  File "/root/envs/sgl_env/lib/python3.12/site-packages/torch/_ops.py", line 1503, in load_library
+    ctypes.CDLL(path)
+  File "/usr/lib/python3.12/ctypes/__init__.py", line 379, in __init__
+    self._handle = _dlopen(self._name, mode)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+OSError: libavutil.so.57: cannot open shared object file: No such file or directory
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/root/envs/sgl_env/lib/python3.12/site-packages/torchcodec/_internally_replaced_utils.py", line 93, in load_torchcodec_shared_libraries
+    torch.ops.load_library(core_library_path)
+  File "/root/envs/sgl_env/lib/python3.12/site-packages/torch/_ops.py", line 1505, in load_library
+    raise OSError(f"Could not load this library: {path}") from e
+OSError: Could not load this library: /root/envs/sgl_env/lib/python3.12/site-packages/torchcodec/libtorchcodec_core5.so
+
+FFmpeg version 4:
+Traceback (most recent call last):
+  File "/root/envs/sgl_env/lib/python3.12/site-packages/torch/_ops.py", line 1503, in load_library
+    ctypes.CDLL(path)
+  File "/usr/lib/python3.12/ctypes/__init__.py", line 379, in __init__
+    self._handle = _dlopen(self._name, mode)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+OSError: libavutil.so.56: cannot open shared object file: No such file or directory
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/root/envs/sgl_env/lib/python3.12/site-packages/torchcodec/_internally_replaced_utils.py", line 93, in load_torchcodec_shared_libraries
+    torch.ops.load_library(core_library_path)
+  File "/root/envs/sgl_env/lib/python3.12/site-packages/torch/_ops.py", line 1505, in load_library
+    raise OSError(f"Could not load this library: {path}") from e
+OSError: Could not load this library: /root/envs/sgl_env/lib/python3.12/site-packages/torchcodec/libtorchcodec_core4.so
+[end of libtorchcodec loading traceback].
+[transformers] The `use_fast` parameter is deprecated and will be removed in a future version. Use `backend="torchvision"` instead of `use_fast=True`, or `backend="pil"` instead of `use_fast=False`.
+[2026-07-06 12:12:49] Failed to load generation config for models/Qwen3.5-9B: models/Qwen3.5-9B does not appear to have a file named generation_config.json. Checkout 'https://huggingface.co/models/Qwen3.5-9B/tree/main' for available files.. Proceeding without generation config.
+[transformers] The `use_fast` parameter is deprecated and will be removed in a future version. Use `backend="torchvision"` instead of `use_fast=True`, or `backend="pil"` instead of `use_fast=False`.
+[2026-07-06 12:12:50] Ignore import error when loading sglang.srt.multimodal.processors.mimo_v2: Could not load libtorchcodec. Likely causes:
+          1. FFmpeg is not properly installed in your environment. We support
+             versions 4, 5, 6, 7, and 8, and we attempt to load libtorchcodec
+             for each of those versions. Errors for versions not installed on
+             your system are expected; only the error for your installed FFmpeg
+             version is relevant. On Windows, ensure you've installed the
+             "full-shared" version which ships DLLs.
+          2. The PyTorch version (2.11.0+cu130) is not compatible with
+             this version of TorchCodec. Refer to the version compatibility
+             table:
+             https://github.com/pytorch/torchcodec?tab=readme-ov-file#installing-torchcodec.
+          3. Another runtime dependency; see exceptions below.
+
+        The following exceptions were raised as we tried to load libtorchcodec:
+        
+[start of libtorchcodec loading traceback]
+FFmpeg version 8:
+Traceback (most recent call last):
+  File "/root/envs/sgl_env/lib/python3.12/site-packages/torch/_ops.py", line 1503, in load_library
+    ctypes.CDLL(path)
+  File "/usr/lib/python3.12/ctypes/__init__.py", line 379, in __init__
+    self._handle = _dlopen(self._name, mode)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+OSError: libavutil.so.60: cannot open shared object file: No such file or directory
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/root/envs/sgl_env/lib/python3.12/site-packages/torchcodec/_internally_replaced_utils.py", line 93, in load_torchcodec_shared_libraries
+    torch.ops.load_library(core_library_path)
+  File "/root/envs/sgl_env/lib/python3.12/site-packages/torch/_ops.py", line 1505, in load_library
+    raise OSError(f"Could not load this library: {path}") from e
+OSError: Could not load this library: /root/envs/sgl_env/lib/python3.12/site-packages/torchcodec/libtorchcodec_core8.so
+
+FFmpeg version 7:
+Traceback (most recent call last):
+  File "/root/envs/sgl_env/lib/python3.12/site-packages/torch/_ops.py", line 1503, in load_library
+    ctypes.CDLL(path)
+  File "/usr/lib/python3.12/ctypes/__init__.py", line 379, in __init__
+    self._handle = _dlopen(self._name, mode)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+OSError: libavutil.so.59: cannot open shared object file: No such file or directory
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/root/envs/sgl_env/lib/python3.12/site-packages/torchcodec/_internally_replaced_utils.py", line 93, in load_torchcodec_shared_libraries
+    torch.ops.load_library(core_library_path)
+  File "/root/envs/sgl_env/lib/python3.12/site-packages/torch/_ops.py", line 1505, in load_library
+    raise OSError(f"Could not load this library: {path}") from e
+OSError: Could not load this library: /root/envs/sgl_env/lib/python3.12/site-packages/torchcodec/libtorchcodec_core7.so
+
+FFmpeg version 6:
+Traceback (most recent call last):
+  File "/root/envs/sgl_env/lib/python3.12/site-packages/torch/_ops.py", line 1503, in load_library
+    ctypes.CDLL(path)
+  File "/usr/lib/python3.12/ctypes/__init__.py", line 379, in __init__
+    self._handle = _dlopen(self._name, mode)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+OSError: libavutil.so.58: cannot open shared object file: No such file or directory
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/root/envs/sgl_env/lib/python3.12/site-packages/torchcodec/_internally_replaced_utils.py", line 93, in load_torchcodec_shared_libraries
+    torch.ops.load_library(core_library_path)
+  File "/root/envs/sgl_env/lib/python3.12/site-packages/torch/_ops.py", line 1505, in load_library
+    raise OSError(f"Could not load this library: {path}") from e
+OSError: Could not load this library: /root/envs/sgl_env/lib/python3.12/site-packages/torchcodec/libtorchcodec_core6.so
+
+FFmpeg version 5:
+Traceback (most recent call last):
+  File "/root/envs/sgl_env/lib/python3.12/site-packages/torch/_ops.py", line 1503, in load_library
+    ctypes.CDLL(path)
+  File "/usr/lib/python3.12/ctypes/__init__.py", line 379, in __init__
+    self._handle = _dlopen(self._name, mode)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+OSError: libavutil.so.57: cannot open shared object file: No such file or directory
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/root/envs/sgl_env/lib/python3.12/site-packages/torchcodec/_internally_replaced_utils.py", line 93, in load_torchcodec_shared_libraries
+    torch.ops.load_library(core_library_path)
+  File "/root/envs/sgl_env/lib/python3.12/site-packages/torch/_ops.py", line 1505, in load_library
+    raise OSError(f"Could not load this library: {path}") from e
+OSError: Could not load this library: /root/envs/sgl_env/lib/python3.12/site-packages/torchcodec/libtorchcodec_core5.so
+
+FFmpeg version 4:
+Traceback (most recent call last):
+  File "/root/envs/sgl_env/lib/python3.12/site-packages/torch/_ops.py", line 1503, in load_library
+    ctypes.CDLL(path)
+  File "/usr/lib/python3.12/ctypes/__init__.py", line 379, in __init__
+    self._handle = _dlopen(self._name, mode)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+OSError: libavutil.so.56: cannot open shared object file: No such file or directory
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/root/envs/sgl_env/lib/python3.12/site-packages/torchcodec/_internally_replaced_utils.py", line 93, in load_torchcodec_shared_libraries
+    torch.ops.load_library(core_library_path)
+  File "/root/envs/sgl_env/lib/python3.12/site-packages/torch/_ops.py", line 1505, in load_library
+    raise OSError(f"Could not load this library: {path}") from e
+OSError: Could not load this library: /root/envs/sgl_env/lib/python3.12/site-packages/torchcodec/libtorchcodec_core4.so
+[end of libtorchcodec loading traceback].
+[transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+[2026-07-06 12:12:50] using attn output gate!
+Multi-thread loading shards:   0% Completed | 0/4 [00:00<?, ?it/s]Multi-thread loading shards:  25% Completed | 1/4 [00:00<00:02,  1.43it/s]Multi-thread loading shards:  50% Completed | 2/4 [00:01<00:01,  1.37it/s]Multi-thread loading shards:  75% Completed | 3/4 [00:02<00:00,  1.34it/s]Multi-thread loading shards: 100% Completed | 4/4 [00:02<00:00,  1.51it/s]Multi-thread loading shards: 100% Completed | 4/4 [00:02<00:00,  1.45it/s]
+  0%|          | 0/36 [00:00<?, ?it/s]Capturing batches (bs=256 avail_mem=16.33 GB):   0%|          | 0/36 [00:00<?, ?it/s]2026-07-06 12:12:55,349 - CUTE_DSL - WARNING - [handle_import_error] - Unexpected error during package walk: cutlass.cute.experimental
+[2026-07-06 12:12:55] Unexpected error during package walk: cutlass.cute.experimental
+Capturing batches (bs=256 avail_mem=16.33 GB):   3%|▎         | 1/36 [00:02<01:33,  2.68s/it]Capturing batches (bs=248 avail_mem=16.11 GB):   3%|▎         | 1/36 [00:02<01:33,  2.68s/it]Capturing batches (bs=240 avail_mem=16.11 GB):   3%|▎         | 1/36 [00:02<01:33,  2.68s/it]Capturing batches (bs=240 avail_mem=16.11 GB):   8%|▊         | 3/36 [00:02<00:24,  1.34it/s]Capturing batches (bs=232 avail_mem=16.09 GB):   8%|▊         | 3/36 [00:02<00:24,  1.34it/s]Capturing batches (bs=224 avail_mem=16.09 GB):   8%|▊         | 3/36 [00:02<00:24,  1.34it/s]Capturing batches (bs=224 avail_mem=16.09 GB):  14%|█▍        | 5/36 [00:02<00:12,  2.50it/s]Capturing batches (bs=216 avail_mem=16.07 GB):  14%|█▍        | 5/36 [00:02<00:12,  2.50it/s]Capturing batches (bs=208 avail_mem=16.07 GB):  14%|█▍        | 5/36 [00:03<00:12,  2.50it/s]Capturing batches (bs=208 avail_mem=16.07 GB):  19%|█▉        | 7/36 [00:03<00:07,  3.82it/s]Capturing batches (bs=200 avail_mem=16.04 GB):  19%|█▉        | 7/36 [00:03<00:07,  3.82it/s]Capturing batches (bs=192 avail_mem=16.04 GB):  19%|█▉        | 7/36 [00:03<00:07,  3.82it/s]Capturing batches (bs=192 avail_mem=16.04 GB):  25%|██▌       | 9/36 [00:03<00:05,  5.28it/s]Capturing batches (bs=184 avail_mem=16.02 GB):  25%|██▌       | 9/36 [00:03<00:05,  5.28it/s]Capturing batches (bs=176 avail_mem=16.02 GB):  25%|██▌       | 9/36 [00:03<00:05,  5.28it/s]Capturing batches (bs=176 avail_mem=16.02 GB):  31%|███       | 11/36 [00:03<00:03,  6.76it/s]Capturing batches (bs=168 avail_mem=16.00 GB):  31%|███       | 11/36 [00:03<00:03,  6.76it/s]Capturing batches (bs=160 avail_mem=16.00 GB):  31%|███       | 11/36 [00:03<00:03,  6.76it/s]Capturing batches (bs=160 avail_mem=16.00 GB):  36%|███▌      | 13/36 [00:03<00:02,  8.17it/s]Capturing batches (bs=152 avail_mem=15.98 GB):  36%|███▌      | 13/36 [00:03<00:02,  8.17it/s]Capturing batches (bs=144 avail_mem=15.98 GB):  36%|███▌      | 13/36 [00:03<00:02,  8.17it/s]Capturing batches (bs=144 avail_mem=15.98 GB):  42%|████▏     | 15/36 [00:03<00:02,  9.38it/s]Capturing batches (bs=136 avail_mem=15.95 GB):  42%|████▏     | 15/36 [00:03<00:02,  9.38it/s]Capturing batches (bs=128 avail_mem=15.95 GB):  42%|████▏     | 15/36 [00:03<00:02,  9.38it/s]Capturing batches (bs=128 avail_mem=15.95 GB):  47%|████▋     | 17/36 [00:03<00:01, 10.37it/s]Capturing batches (bs=120 avail_mem=15.93 GB):  47%|████▋     | 17/36 [00:03<00:01, 10.37it/s]Capturing batches (bs=112 avail_mem=15.93 GB):  47%|████▋     | 17/36 [00:03<00:01, 10.37it/s]Capturing batches (bs=112 avail_mem=15.93 GB):  53%|█████▎    | 19/36 [00:03<00:01, 11.29it/s]Capturing batches (bs=104 avail_mem=15.91 GB):  53%|█████▎    | 19/36 [00:03<00:01, 11.29it/s]Capturing batches (bs=96 avail_mem=15.90 GB):  53%|█████▎    | 19/36 [00:04<00:01, 11.29it/s] Capturing batches (bs=96 avail_mem=15.90 GB):  58%|█████▊    | 21/36 [00:04<00:01, 11.83it/s]Capturing batches (bs=88 avail_mem=15.88 GB):  58%|█████▊    | 21/36 [00:04<00:01, 11.83it/s]Capturing batches (bs=80 avail_mem=15.88 GB):  58%|█████▊    | 21/36 [00:04<00:01, 11.83it/s]Capturing batches (bs=80 avail_mem=15.88 GB):  64%|██████▍   | 23/36 [00:04<00:01, 12.27it/s]Capturing batches (bs=72 avail_mem=15.86 GB):  64%|██████▍   | 23/36 [00:04<00:01, 12.27it/s]Capturing batches (bs=64 avail_mem=15.86 GB):  64%|██████▍   | 23/36 [00:04<00:01, 12.27it/s]Capturing batches (bs=64 avail_mem=15.86 GB):  69%|██████▉   | 25/36 [00:04<00:00, 12.58it/s]Capturing batches (bs=56 avail_mem=15.84 GB):  69%|██████▉   | 25/36 [00:04<00:00, 12.58it/s]Capturing batches (bs=48 avail_mem=15.84 GB):  69%|██████▉   | 25/36 [00:04<00:00, 12.58it/s]Capturing batches (bs=48 avail_mem=15.84 GB):  75%|███████▌  | 27/36 [00:04<00:00, 12.85it/s]Capturing batches (bs=40 avail_mem=15.81 GB):  75%|███████▌  | 27/36 [00:04<00:00, 12.85it/s]Capturing batches (bs=32 avail_mem=15.81 GB):  75%|███████▌  | 27/36 [00:04<00:00, 12.85it/s]Capturing batches (bs=32 avail_mem=15.81 GB):  81%|████████  | 29/36 [00:04<00:00, 13.02it/s]Capturing batches (bs=24 avail_mem=15.79 GB):  81%|████████  | 29/36 [00:04<00:00, 13.02it/s]Capturing batches (bs=16 avail_mem=15.79 GB):  81%|████████  | 29/36 [00:04<00:00, 13.02it/s]Capturing batches (bs=16 avail_mem=15.79 GB):  86%|████████▌ | 31/36 [00:04<00:00, 12.06it/s]Capturing batches (bs=12 avail_mem=15.77 GB):  86%|████████▌ | 31/36 [00:04<00:00, 12.06it/s]Capturing batches (bs=8 avail_mem=15.77 GB):  86%|████████▌ | 31/36 [00:04<00:00, 12.06it/s] Capturing batches (bs=8 avail_mem=15.77 GB):  92%|█████████▏| 33/36 [00:05<00:00, 12.52it/s]Capturing batches (bs=4 avail_mem=15.74 GB):  92%|█████████▏| 33/36 [00:05<00:00, 12.52it/s]Capturing batches (bs=2 avail_mem=15.74 GB):  92%|█████████▏| 33/36 [00:05<00:00, 12.52it/s]Capturing batches (bs=2 avail_mem=15.74 GB):  97%|█████████▋| 35/36 [00:05<00:00, 13.23it/s]Capturing batches (bs=1 avail_mem=15.72 GB):  97%|█████████▋| 35/36 [00:05<00:00, 13.23it/s]Capturing batches (bs=1 avail_mem=15.72 GB): 100%|██████████| 36/36 [00:05<00:00,  6.85it/s]
+{"measure_wall_s": 6.745078962994739, "prompt_len": 16, "decode_len": 1024, "mode": "cudagraph"}
+Collecting data...
+Generating '/tmp/nsys-report-4576.qdstrm'
+[1/1] [0%                          ] Qwen3.5-9B__cudagraph__case7.nsys-rep[1/1] [0%                          ] Qwen3.5-9B__cudagraph__case7.nsys-rep[1/1] [13%                         ] Qwen3.5-9B__cudagraph__case7.nsys-rep[1/1] [10%                         ] Qwen3.5-9B__cudagraph__case7.nsys-rep[1/1] [8%                          ] Qwen3.5-9B__cudagraph__case7.nsys-rep[1/1] [7%                          ] Qwen3.5-9B__cudagraph__case7.nsys-rep[1/1] [14%                         ] Qwen3.5-9B__cudagraph__case7.nsys-rep[1/1] [12%                         ] Qwen3.5-9B__cudagraph__case7.nsys-rep[1/1] [11%                         ] Qwen3.5-9B__cudagraph__case7.nsys-rep[1/1] [10%                         ] Qwen3.5-9B__cudagraph__case7.nsys-rep[1/1] [9%                          ] Qwen3.5-9B__cudagraph__case7.nsys-rep[1/1] [8%                          ] Qwen3.5-9B__cudagraph__case7.nsys-rep[1/1] [7%                          ] Qwen3.5-9B__cudagraph__case7.nsys-rep[1/1] [6%                          ] Qwen3.5-9B__cudagraph__case7.nsys-rep[1/1] [5%                          ] Qwen3.5-9B__cudagraph__case7.nsys-rep[1/1] [5%                          ] Qwen3.5-9B__cudagraph__case7.nsys-rep[1/1] [6%                          ] Qwen3.5-9B__cudagraph__case7.nsys-rep[1/1] [8%                          ] Qwen3.5-9B__cudagraph__case7.nsys-rep[1/1] [10%                         ] Qwen3.5-9B__cudagraph__case7.nsys-rep[1/1] [11%                         ] Qwen3.5-9B__cudagraph__case7.nsys-rep[1/1] [13%                         ] Qwen3.5-9B__cudagraph__case7.nsys-rep[1/1] [=15%                        ] Qwen3.5-9B__cudagraph__case7.nsys-rep[1/1] [=16%                        ] Qwen3.5-9B__cudagraph__case7.nsys-rep[1/1] [==18%                       ] Qwen3.5-9B__cudagraph__case7.nsys-rep[1/1] [==20%                       ] Qwen3.5-9B__cudagraph__case7.nsys-rep[1/1] [==21%                       ] Qwen3.5-9B__cudagraph__case7.nsys-rep[1/1] [===23%                      ] Qwen3.5-9B__cudagraph__case7.nsys-rep[1/1] [====25%                     ] Qwen3.5-9B__cudagraph__case7.nsys-rep[1/1] [====27%                     ] Qwen3.5-9B__cudagraph__case7.nsys-rep[1/1] [====28%                     ] Qwen3.5-9B__cudagraph__case7.nsys-rep[1/1] [=====30%                    ] Qwen3.5-9B__cudagraph__case7.nsys-rep[1/1] [=====32%                    ] Qwen3.5-9B__cudagraph__case7.nsys-rep[1/1] [======33%                   ] Qwen3.5-9B__cudagraph__case7.nsys-rep[1/1] [======35%                   ] Qwen3.5-9B__cudagraph__case7.nsys-rep[1/1] [=======37%                  ] Qwen3.5-9B__cudagraph__case7.nsys-rep[1/1] [=======38%                  ] Qwen3.5-9B__cudagraph__case7.nsys-rep[1/1] [========40%                 ] Qwen3.5-9B__cudagraph__case7.nsys-rep[1/1] [========42%                 ] Qwen3.5-9B__cudagraph__case7.nsys-rep[1/1] [=========43%                ] Qwen3.5-9B__cudagraph__case7.nsys-rep[1/1] [=========45%                ] Qwen3.5-9B__cudagraph__case7.nsys-rep[1/1] [==========47%               ] Qwen3.5-9B__cudagraph__case7.nsys-rep[1/1] [==========48%               ] Qwen3.5-9B__cudagraph__case7.nsys-rep[1/1] [===========50%              ] Qwen3.5-9B__cudagraph__case7.nsys-rep[1/1] [========================100%] Qwen3.5-9B__cudagraph__case7.nsys-rep[1/1] [========================100%] Qwen3.5-9B__cudagraph__case7.nsys-rep
+Generated:
+	/root/profiling/kernel_launch/H100/results/_work/Qwen3.5-9B__cudagraph__case7.nsys-rep
+
+$ nsys export --type sqlite --force-overwrite=true --output kernel_launch/H100/results/_work/Qwen3.5-9B__cudagraph__case7.sqlite kernel_launch/H100/results/_work/Qwen3.5-9B__cudagraph__case7.nsys-rep
+Processing 503579 events: 
+[1%                                                                            ][2%                                                                            ][3%                                                                            ][=4%                                                                           ][=5%                                                                           ][==6%                                                                          ][===7%                                                                         ][====8%                                                                        ][=====9%                                                                       ][====10%                                                                       ][=====11%                                                                      ][======12%                                                                     ][=======13%                                                                    ][=======14%                                                                    ][========15%                                                                   ][=========16%                                                                  ][==========17%                                                                 ][===========18%                                                                ][===========19%                                                                ][============20%                                                               ][=============21%                                                              ][==============22%                                                             ][==============23%                                                             ][===============24%                                                            ][================25%                                                           ][=================26%                                                          ][==================27%                                                         ][==================28%                                                         ][===================29%                                                        ][====================30%                                                       ][=====================31%                                                      ][=====================32%                                                      ][======================33%                                                     ][=======================34%                                                    ][========================35%                                                   ][=========================36%                                                  ][=========================37%                                                  ][==========================38%                                                 ][===========================39%                                                ][============================40%                                               ][============================41%                                               ][=============================42%                                              ][==============================43%                                             ][===============================44%                                            ][================================45%                                           ][================================46%                                           ][=================================47%                                          ][==================================48%                                         ][===================================49%                                        ][====================================50%                                       ][====================================51%                                       ][=====================================52%                                      ][======================================53%                                     ][=======================================54%                                    ][=======================================55%                                    ][========================================56%                                   ][=========================================57%                                  ][==========================================58%                                 ][===========================================59%                                ][===========================================60%                                ][============================================61%                               ][=============================================62%                              ][==============================================63%                             ][==============================================64%                             ][===============================================65%                            ][================================================66%                           ][=================================================67%                          ][==================================================68%                         ][==================================================69%                         ][===================================================70%                        ][====================================================71%                       ][=====================================================72%                      ][=====================================================73%                      ][======================================================74%                     ][=======================================================75%                    ][========================================================76%                   ][=========================================================77%                  ][=========================================================78%                  ][==========================================================79%                 ][===========================================================80%                ][============================================================81%               ][============================================================82%               ][=============================================================83%              ][==============================================================84%             ][===============================================================85%            ][================================================================86%           ][================================================================87%           ][=================================================================88%          ][==================================================================89%         ][===================================================================90%        ][===================================================================91%        ][====================================================================92%       ][=====================================================================93%      ][======================================================================94%     ][=======================================================================95%    ][=======================================================================96%    ][========================================================================97%   ][=========================================================================98%  ][==========================================================================99% ][==========================================================================100%]
+
+$ /root/envs/sgl_env/bin/python /root/profiling/kernel_launch/H100/scripts/analyze_nsys.py kernel_launch/H100/results/_work/Qwen3.5-9B__cudagraph__case7.sqlite kernel_launch/H100/results/metrics/Qwen3.5-9B__cudagraph__case7.json --measure-range measure --model Qwen3.5-9B --mode cudagraph --case case7 --prompt-len 16 --decode-len 1024
+[analyze] kernel_launch/H100/results/metrics/Qwen3.5-9B__cudagraph__case7.json: 18298 kernels, launch 2.22% of e2e
