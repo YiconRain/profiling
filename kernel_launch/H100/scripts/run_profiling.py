@@ -77,14 +77,18 @@ def run_cell(model_alias, model_path, mode, case, python_bin: str) -> None:
     print(f"[run ] {tag}")
 
     # 1. Profile: 1 warmup + 1 measured generate inside worker.py.
-    #    --cuda-graph-trace=node records each kernel node INSIDE CUDA graphs; the
-    #    default ("graph") logs only one entry per graph launch, which leaves the
-    #    KERNEL table empty for cudagraph decode (and, for large MoEs, prevents
-    #    the device buffer from filling so nothing flushes). Harmless in eager.
+    #    --capture-range=cudaProfilerApi + --capture-range-end=stop: nsys records
+    #    only the region between the worker's cudaProfilerStart/Stop (the measured
+    #    generate), and cudaProfilerStop forces a CUPTI flush while the SGLang
+    #    subprocess is still alive -- robust for CUDA graphs and large MoEs.
+    #    --cuda-graph-trace=node records each kernel node inside CUDA graphs
+    #    (the default logs only one entry per graph launch). Harmless in eager.
     sh([
         "nsys", "profile",
-        "--trace=cuda,nvtx",
+        "--trace=cuda",
         "--cuda-graph-trace=node",
+        "--capture-range=cudaProfilerApi",
+        "--capture-range-end=stop",
         "--sample=none", "--cpuctxsw=none",
         "--force-overwrite=true",
         "--output", str(rep),
@@ -94,7 +98,6 @@ def run_cell(model_alias, model_path, mode, case, python_bin: str) -> None:
         "--prompt-len", str(case["prompt_len"]),
         "--decode-len", str(case["decode_len"]),
         "--attention-backend", C.ATTENTION_BACKEND,
-        "--measure-range", C.MEASURE_RANGE,
     ], log_path)
 
     # 2. Export to SQLite.
@@ -103,7 +106,6 @@ def run_cell(model_alias, model_path, mode, case, python_bin: str) -> None:
 
     # 3. Parse metrics.
     sh([python_bin, str(ANALYZER), str(sqlite), str(metrics_json),
-        "--measure-range", C.MEASURE_RANGE,
         "--model", model_alias, "--mode", mode, "--case", case["id"],
         "--prompt-len", str(case["prompt_len"]),
         "--decode-len", str(case["decode_len"])], log_path)

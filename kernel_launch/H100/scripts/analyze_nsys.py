@@ -1,17 +1,19 @@
 """Parse an nsys-exported SQLite database into kernel-launch metrics.
 
-Metrics extracted for the single measured generate() (the NVTX 'measure'
-window):
+The nsys report was captured with --capture-range=cudaProfilerApi, so it holds
+ONLY the single measured generate() (model load + warmup are excluded). We can
+therefore count every kernel / launch in the database directly.
+
+Metrics:
   * total_kernels        - number of GPU kernel executions
   * total_kernel_gpu_ns  - summed GPU time of those kernels
-  * launch_count         - number of cudaLaunchKernel* host API calls
+  * launch_count         - number of kernel-launch host API calls
   * launch_overhead_ns   - summed host time spent in those launch calls
   * launch_overhead_pct  - launch_overhead_ns / e2e_ns * 100
-  * e2e_ns               - duration of the measure window (end-to-end)
+  * e2e_ns               - span of the captured region (host API first..last)
   * top5                 - five kernels with the largest summed GPU time
 
-Usage: analyze_nsys.py <db.sqlite> <output.json> [--measure-range measure]
-       plus metadata flags recorded verbatim into the output.
+Usage: analyze_nsys.py <db.sqlite> <output.json> [metadata flags]
 """
 
 from __future__ import annotations
@@ -20,40 +22,27 @@ import argparse
 import json
 import sqlite3
 
-
-def measure_window(con: sqlite3.Connection, range_name: str) -> tuple[int, int]:
-    """Return (start_ns, end_ns) of the NVTX measure range.
-
-    NVTX text is stored either inline (NVTX_EVENTS.text) or via a StringIds id
-    (NVTX_EVENTS.textId); handle both.
-    """
-    row = con.execute(
-        """
-        SELECT e.start, e.end
-        FROM NVTX_EVENTS e
-        LEFT JOIN StringIds s ON s.id = e.textId
-        WHERE e.end IS NOT NULL AND COALESCE(e.text, s.value) = ?
-        ORDER BY e.start
-        LIMIT 1
-        """,
-        (range_name,),
-    ).fetchone()
-    if row is None:
-        raise SystemExit(f"NVTX range {range_name!r} not found in database.")
-    return int(row[0]), int(row[1])
+# Host APIs that launch GPU kernels. cudaLaunchKernel* dominates eager mode;
+# cudaGraphLaunch* replaces most of them in cudagraph mode (one call replays
+# many kernels) -- counting both keeps the two modes comparable.
+LAUNCH_API_PATTERNS = ("cudaLaunchKernel%", "cudaGraphLaunch%", "cuLaunchKernel%")
 
 
-def kernel_stats(con: sqlite3.Connection, w0: int, w1: int):
+def table_exists(con: sqlite3.Connection, name: str) -> bool:
+    return con.execute(
+        "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", (name,)
+    ).fetchone() is not None
+
+
+def kernel_stats(con: sqlite3.Connection):
     rows = con.execute(
         """
         SELECT s.value AS name, COUNT(*) AS n, SUM(k.end - k.start) AS dur
         FROM CUPTI_ACTIVITY_KIND_KERNEL k
         JOIN StringIds s ON s.id = k.shortName
-        WHERE k.start >= ? AND k.start < ?
         GROUP BY name
         ORDER BY dur DESC
-        """,
-        (w0, w1),
+        """
     ).fetchall()
     total_kernels = sum(r[1] for r in rows)
     total_gpu_ns = sum(r[2] or 0 for r in rows)
@@ -64,23 +53,17 @@ def kernel_stats(con: sqlite3.Connection, w0: int, w1: int):
     return total_kernels, total_gpu_ns, top5
 
 
-# Host APIs that launch GPU kernels. cudaLaunchKernel* dominates eager mode;
-# cudaGraphLaunch* replaces most of them in cudagraph mode (one call replays
-# many kernels) -- counting both keeps the two modes comparable.
-LAUNCH_API_PATTERNS = ("cudaLaunchKernel%", "cudaGraphLaunch%", "cuLaunchKernel%")
-
-
-def launch_stats(con: sqlite3.Connection, w0: int, w1: int):
+def launch_stats(con: sqlite3.Connection):
     like = " OR ".join(["s.value LIKE ?"] * len(LAUNCH_API_PATTERNS))
     rows = con.execute(
         f"""
         SELECT s.value AS api, COUNT(*) AS n, SUM(r.end - r.start) AS dur
         FROM CUPTI_ACTIVITY_KIND_RUNTIME r
         JOIN StringIds s ON s.id = r.nameId
-        WHERE ({like}) AND r.start >= ? AND r.start < ?
+        WHERE ({like})
         GROUP BY api
         """,
-        (*LAUNCH_API_PATTERNS, w0, w1),
+        LAUNCH_API_PATTERNS,
     ).fetchall()
     count = sum(r[1] for r in rows)
     dur = sum(r[2] or 0 for r in rows)
@@ -88,11 +71,25 @@ def launch_stats(con: sqlite3.Connection, w0: int, w1: int):
     return count, dur, by_api
 
 
+def e2e_span_ns(con: sqlite3.Connection) -> int:
+    """Wall span of the captured region: earliest..latest host API call.
+
+    RUNTIME events bracket the CPU side of the measured generate(); their span
+    approximates its end-to-end wall time. Fall back to kernel span if needed.
+    """
+    for table in ("CUPTI_ACTIVITY_KIND_RUNTIME", "CUPTI_ACTIVITY_KIND_KERNEL"):
+        if not table_exists(con, table):
+            continue
+        row = con.execute(f"SELECT MIN(start), MAX(end) FROM {table}").fetchone()
+        if row and row[0] is not None:
+            return int(row[1] - row[0])
+    return 0
+
+
 def main() -> int:
     p = argparse.ArgumentParser()
     p.add_argument("db")
     p.add_argument("out")
-    p.add_argument("--measure-range", default="measure")
     p.add_argument("--model")
     p.add_argument("--mode")
     p.add_argument("--case")
@@ -101,10 +98,11 @@ def main() -> int:
     args = p.parse_args()
 
     con = sqlite3.connect(args.db)
-    w0, w1 = measure_window(con, args.measure_range)
-    e2e_ns = w1 - w0
-    total_kernels, total_gpu_ns, top5 = kernel_stats(con, w0, w1)
-    launch_count, launch_ns, launch_by_api = launch_stats(con, w0, w1)
+    if not table_exists(con, "CUPTI_ACTIVITY_KIND_KERNEL"):
+        raise SystemExit("No CUPTI_ACTIVITY_KIND_KERNEL table: capture produced no kernels.")
+    e2e_ns = e2e_span_ns(con)
+    total_kernels, total_gpu_ns, top5 = kernel_stats(con)
+    launch_count, launch_ns, launch_by_api = launch_stats(con)
     con.close()
 
     metrics = {
@@ -128,7 +126,7 @@ def main() -> int:
 
     with open(args.out, "w") as f:
         json.dump(metrics, f, indent=2)
-    print(f"[analyze] {args.out}: {total_kernels} kernels, "
+    print(f"[analyze] {args.out}: {total_kernels} kernels, launch_count {launch_count}, "
           f"launch {metrics['launch_overhead_pct']:.2f}% of e2e")
     return 0
 
