@@ -61,10 +61,16 @@ SGLang 的模型前向运行在独立的 scheduler 子进程中，而 NVTX `meas
 |------|------|
 | 端到端时间 e2e | NVTX `measure` 窗口的时长 |
 | kernel 总数 | 窗口内 `CUPTI_ACTIVITY_KIND_KERNEL` 记录数 |
-| launch 次数 | 窗口内 `cudaLaunchKernel*` 主机 API 调用数（`CUPTI_ACTIVITY_KIND_RUNTIME`） |
+| launch 次数 | 窗口内 kernel 启动类主机 API 调用数：`cudaLaunchKernel*` / `cudaGraphLaunch*` / `cuLaunchKernel*`（`CUPTI_ACTIVITY_KIND_RUNTIME`），另在 `launch_by_api` 中给出分项 |
 | launch 开销 | 上述 launch API 调用的累计主机耗时 |
 | launch 占比 | launch 开销 / e2e × 100% |
 | Top-5 kernel | 窗口内按累计 GPU 时间排序的前 5 个 kernel |
+
+> **eager vs cudagraph 的解读**：eager 模式下每个 kernel 对应一次 `cudaLaunchKernel`，
+> 因此 launch 次数≈kernel 数、launch 开销占比高；cudagraph 模式下同样数量的 kernel
+> 由极少量 `cudaGraphLaunch`（外加少量未纳入图的 eager 调用，如采样）重放完成，
+> launch 次数和开销都大幅下降——这正是本实验要量化的核心对比。`total_kernels`（GPU
+> 端执行次数）在两种模式下口径一致，可直接比较。
 
 ## 4. 目录结构
 

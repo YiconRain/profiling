@@ -64,18 +64,28 @@ def kernel_stats(con: sqlite3.Connection, w0: int, w1: int):
     return total_kernels, total_gpu_ns, top5
 
 
+# Host APIs that launch GPU kernels. cudaLaunchKernel* dominates eager mode;
+# cudaGraphLaunch* replaces most of them in cudagraph mode (one call replays
+# many kernels) -- counting both keeps the two modes comparable.
+LAUNCH_API_PATTERNS = ("cudaLaunchKernel%", "cudaGraphLaunch%", "cuLaunchKernel%")
+
+
 def launch_stats(con: sqlite3.Connection, w0: int, w1: int):
-    row = con.execute(
-        """
-        SELECT COUNT(*), SUM(r.end - r.start)
+    like = " OR ".join(["s.value LIKE ?"] * len(LAUNCH_API_PATTERNS))
+    rows = con.execute(
+        f"""
+        SELECT s.value AS api, COUNT(*) AS n, SUM(r.end - r.start) AS dur
         FROM CUPTI_ACTIVITY_KIND_RUNTIME r
         JOIN StringIds s ON s.id = r.nameId
-        WHERE s.value LIKE 'cudaLaunchKernel%'
-          AND r.start >= ? AND r.start < ?
+        WHERE ({like}) AND r.start >= ? AND r.start < ?
+        GROUP BY api
         """,
-        (w0, w1),
-    ).fetchone()
-    return int(row[0] or 0), int(row[1] or 0)
+        (*LAUNCH_API_PATTERNS, w0, w1),
+    ).fetchall()
+    count = sum(r[1] for r in rows)
+    dur = sum(r[2] or 0 for r in rows)
+    by_api = {r[0]: {"count": r[1], "overhead_ns": int(r[2] or 0)} for r in rows}
+    return count, dur, by_api
 
 
 def main() -> int:
@@ -94,7 +104,7 @@ def main() -> int:
     w0, w1 = measure_window(con, args.measure_range)
     e2e_ns = w1 - w0
     total_kernels, total_gpu_ns, top5 = kernel_stats(con, w0, w1)
-    launch_count, launch_ns = launch_stats(con, w0, w1)
+    launch_count, launch_ns, launch_by_api = launch_stats(con, w0, w1)
     con.close()
 
     metrics = {
@@ -112,6 +122,7 @@ def main() -> int:
         "launch_overhead_ns": launch_ns,
         "launch_overhead_ms": launch_ns / 1e6,
         "launch_overhead_pct": (launch_ns / e2e_ns * 100) if e2e_ns else 0.0,
+        "launch_by_api": launch_by_api,
         "top5_kernels": top5,
     }
 
