@@ -14,3 +14,7 @@ __pycache__/
 # NOTE: compressed nsys results (results/nsys/**/*.gz), metrics, and logs ARE
 # tracked and pushed to GitHub -- the instance is ephemeral, so GitHub is the
 # durable store for the profiling outputs.
+
+# rsync partial/temp files
+kernel_launch/**/results/nsys/**/.*.gz.*
+kernel_launch/**/results/nsys/**/.rsync-partial/

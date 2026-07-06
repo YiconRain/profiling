@@ -1,0 +1,18 @@
+{
+  "model": "Qwen3.5-9B",
+  "mode": "cudagraph",
+  "case": "case3",
+  "prompt_len": 8192,
+  "decode_len": 0,
+  "e2e_ns": 248142330,
+  "e2e_ms": 248.14233,
+  "total_kernels": 0,
+  "total_kernel_gpu_ns": 0,
+  "total_kernel_gpu_ms": 0.0,
+  "launch_count": 0,
+  "launch_overhead_ns": 0,
+  "launch_overhead_ms": 0.0,
+  "launch_overhead_pct": 0.0,
+  "launch_by_api": {},
+  "top5_kernels": []
+}
