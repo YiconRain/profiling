@@ -19,6 +19,7 @@ from __future__ import annotations
 import argparse
 import json
 import sqlite3
+from pathlib import Path
 
 
 def measure_window(con: sqlite3.Connection, range_name: str) -> tuple[int, int]:
@@ -98,6 +99,10 @@ def main() -> int:
     p.add_argument("--case")
     p.add_argument("--prompt-len", type=int)
     p.add_argument("--decode-len", type=int)
+    p.add_argument("--profile-layers", type=int, default=None,
+                   help="Number of layers actually loaded (reduced-layer run).")
+    p.add_argument("--full-layers-from", default=None,
+                   help="config.json whose num_hidden_layers is the full layer count.")
     args = p.parse_args()
 
     con = sqlite3.connect(args.db)
@@ -125,6 +130,25 @@ def main() -> int:
         "launch_by_api": launch_by_api,
         "top5_kernels": top5,
     }
+
+    # Reduced-layer extrapolation: scale measured counts by full/profile layers.
+    # First-order estimate that treats every measured kernel as per-layer work;
+    # documented as approximate in the README.
+    if args.profile_layers:
+        full_layers = None
+        if args.full_layers_from:
+            cfg = json.loads(Path(args.full_layers_from).read_text())
+            full_layers = cfg.get("num_hidden_layers")
+        metrics["profile_layers"] = args.profile_layers
+        metrics["full_layers"] = full_layers
+        if full_layers:
+            scale = full_layers / args.profile_layers
+            metrics["extrapolated"] = {
+                "scale": scale,
+                "total_kernels": round(total_kernels * scale),
+                "launch_count": round(launch_count * scale),
+                "launch_overhead_ms": launch_ns * scale / 1e6,
+            }
 
     with open(args.out, "w") as f:
         json.dump(metrics, f, indent=2)

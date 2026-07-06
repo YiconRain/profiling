@@ -8,14 +8,20 @@ import sys
 from pathlib import Path
 
 
-# Qwen3 series (legacy, kept for backward compatibility).
+# Qwen3 series. Dense 0.6B/1.7B/8B plus Qwen3-30B-A3B, the small Qwen3 MoE
+# (30B total / 3B active) that fits on a single 80GB H100 (the 35B Qwen3.5 MoE
+# does not).
 QWEN3_SPECS = {
     "Qwen3-0.6B": "Qwen/Qwen3-0.6B",
     "Qwen3-1.7B": "Qwen/Qwen3-1.7B",
     "Qwen3-8B": "Qwen/Qwen3-8B",
+    "Qwen3-30B-A3B": "Qwen/Qwen3-30B-A3B",
 }
 
-# Qwen3.5 series (target of the current kernel-launch experiments).
+# Qwen3.5 series (dense models used in the kernel-launch experiments).
+# The smallest Qwen3.5 MoE (35B-A3B, ~70GB bf16) does not fit a single 80GB
+# H100; the MoE case uses Qwen3-30B-A3B instead (see QWEN3_SPECS). The larger
+# Qwen3.5 MoEs are handled via reduced-layer extrapolation (QWEN35_MOE_SPECS).
 QWEN35_SPECS = {
     "Qwen3.5-0.8B": "Qwen/Qwen3.5-0.8B",
     "Qwen3.5-2B": "Qwen/Qwen3.5-2B",
@@ -24,13 +30,20 @@ QWEN35_SPECS = {
     "Qwen3.5-27B": "Qwen/Qwen3.5-27B",
 }
 
+# Large Qwen3.5 MoEs that exceed 80GB. Downloaded partially (config + first-K
+# layer shards) and profiled with reduced layers, then extrapolated to full.
+QWEN35_MOE_SPECS = {
+    "Qwen3.5-122B-A10B": "Qwen/Qwen3.5-122B-A10B",
+    "Qwen3.5-397B-A17B": "Qwen/Qwen3.5-397B-A17B",
+}
+
 SERIES = {
     "qwen3": QWEN3_SPECS,
     "qwen3.5": QWEN35_SPECS,
 }
 
 # Combined lookup: every known alias -> Hugging Face repo id.
-ALL_SPECS = {**QWEN3_SPECS, **QWEN35_SPECS}
+ALL_SPECS = {**QWEN3_SPECS, **QWEN35_SPECS, **QWEN35_MOE_SPECS}
 
 
 def project_root() -> Path:
@@ -85,7 +98,49 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Call snapshot_download even if the local model directory looks complete.",
     )
+    parser.add_argument(
+        "--layers",
+        type=int,
+        default=None,
+        help=(
+            "Partial download: fetch only config/tokenizer plus the shards holding "
+            "the first N transformer layers (+ embeddings / lm_head). Requires "
+            "--model. Used for large MoEs profiled via reduced-layer extrapolation."
+        ),
+    )
     return parser.parse_args()
+
+
+def wanted_weight(name: str, num_layers: int) -> bool:
+    """Keep non-layer weights (embed/norm/lm_head) and layers with index < num_layers."""
+    import re
+
+    m = re.search(r"layers\.(\d+)\.", name)
+    return int(m.group(1)) < num_layers if m else True
+
+
+def download_partial(alias, repo_id, model_dir, revision, token, num_layers) -> None:
+    """Download only the shards needed to instantiate the first num_layers layers."""
+    import json
+
+    from huggingface_hub import hf_hub_download, snapshot_download
+
+    local_dir = model_dir / alias
+    local_dir.mkdir(parents=True, exist_ok=True)
+
+    index_name = "model.safetensors.index.json"
+    idx_path = hf_hub_download(repo_id, index_name, revision=revision, token=token,
+                               local_dir=str(local_dir))
+    weight_map = json.loads(Path(idx_path).read_text())["weight_map"]
+    shards = sorted({shard for name, shard in weight_map.items()
+                     if wanted_weight(name, num_layers)})
+
+    allow = ["config.json", "generation_config.json", "tokenizer*", "*.txt",
+             "*.model", "*.py", index_name, *shards]
+    print(f"[partial] {alias}: first {num_layers} layers -> {len(shards)} shard(s)")
+    snapshot_download(repo_id, revision=revision, token=token,
+                      local_dir=str(local_dir), allow_patterns=allow)
+    print(f"[ok] {alias}: partial model ready at {local_dir}")
 
 
 def resolve_aliases(args: argparse.Namespace) -> list[str]:
@@ -152,6 +207,16 @@ def main() -> int:
     args = parse_args()
     model_dir = args.model_dir.expanduser().resolve()
     model_dir.mkdir(parents=True, exist_ok=True)
+
+    if args.layers is not None:
+        if not args.model:
+            raise SystemExit("--layers requires --model <alias>.")
+        if args.model not in ALL_SPECS:
+            raise SystemExit(f"Unknown model alias {args.model!r}.")
+        download_partial(args.model, ALL_SPECS[args.model], model_dir,
+                         args.revision, args.token, args.layers)
+        print(f"Models directory: {model_dir}")
+        return 0
 
     for alias in resolve_aliases(args):
         download_model(alias, ALL_SPECS[alias], model_dir, args.revision, args.token, args.force)

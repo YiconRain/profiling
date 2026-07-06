@@ -21,6 +21,7 @@ CSV_FIELDS = [
     "model", "mode", "case", "prompt_len", "decode_len",
     "e2e_ms", "total_kernels", "total_kernel_gpu_ms",
     "launch_count", "launch_overhead_ms", "launch_overhead_pct",
+    "profile_layers", "full_layers",
 ]
 
 
@@ -59,24 +60,44 @@ def write_readme(rows: list[dict], out: Path) -> None:
                  "- **launch_overhead_ms / pct**：这些 launch 调用累计的主机耗时，"
                  "以及其占端到端时间的比例。\n")
 
-    # Main table grouped by model.
-    models = [m for m in C.MODELS if any(r["model"] == m for r in rows)]
+    # Main table grouped by model (full models first, then extrapolation MoEs).
+    order = list(C.MODELS) + list(C.EXTRAP_MODELS)
+    models = [m for m in order if any(r["model"] == m for r in rows)]
     for model in models:
         lines.append(f"\n## {model}\n")
-        lines.append("| Case | Mode | e2e (ms) | Kernels | Launches | "
+        lines.append("| Case | Mode | Layers | e2e (ms) | Kernels | Launches | "
                      "Launch 开销 (ms) | Launch 占比 (%) |")
-        lines.append("|---|---|---|---|---|---|---|")
+        lines.append("|---|---|---|---|---|---|---|---|")
         for mode in C.MODES:
             for case in C.CASES:
                 r = next((x for x in rows if x["model"] == model
                           and x["mode"] == mode and x["case"] == case["id"]), None)
                 if not r:
                     continue
+                layers = ("full" if not r.get("profile_layers")
+                          else f"{r['profile_layers']}/{r.get('full_layers', '?')}")
                 lines.append(
-                    f"| {case_label(case['id'])} | {mode} | {r['e2e_ms']:.3f} | "
+                    f"| {case_label(case['id'])} | {mode} | {layers} | {r['e2e_ms']:.3f} | "
                     f"{r['total_kernels']} | {r['launch_count']} | "
                     f"{r['launch_overhead_ms']:.3f} | {r['launch_overhead_pct']:.2f} |"
                 )
+
+    # Reduced-layer extrapolation estimates (if any).
+    extrap = [r for r in rows if r.get("extrapolated")]
+    if extrap:
+        lines.append("\n## 减层外推估计（大 MoE）\n")
+        lines.append("> 仅加载前若干层实测，再按 `全层数 / 实测层数` 线性外推到全模型。"
+                     "该估计把所有实测 kernel 视为按层线性增长，为一阶近似。\n")
+        lines.append("| 模型 | Mode | Case | 实测层 | 全层 | 外推 Kernels | 外推 Launches | "
+                     "外推 Launch 开销 (ms) |")
+        lines.append("|---|---|---|---|---|---|---|---|")
+        for r in extrap:
+            e = r["extrapolated"]
+            lines.append(
+                f"| {r['model']} | {r['mode']} | {case_label(r['case'])} | "
+                f"{r['profile_layers']} | {r.get('full_layers', '?')} | "
+                f"{e['total_kernels']} | {e['launch_count']} | {e['launch_overhead_ms']:.3f} |"
+            )
 
     # Top-5 kernels per run.
     lines.append("\n## 各组合 Top-5 耗时 Kernel\n")

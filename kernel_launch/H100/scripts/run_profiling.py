@@ -47,7 +47,7 @@ def gzip_into(src: Path, dst_gz: Path) -> None:
     src.unlink()
 
 
-def run_cell(model_alias, model_path, mode, case, python_bin: str) -> None:
+def run_cell(model_alias, model_path, mode, case, num_layers, python_bin: str) -> None:
     tag = C.run_tag(model_alias, mode, case["id"])
 
     metrics_dir = Path(C.METRICS_DIR)
@@ -67,10 +67,10 @@ def run_cell(model_alias, model_path, mode, case, python_bin: str) -> None:
     rep_file = work_dir / f"{tag}.nsys-rep"
     sqlite = work_dir / f"{tag}.sqlite"
 
-    print(f"[run ] {tag}")
+    print(f"[run ] {tag}" + (f" (layers={num_layers})" if num_layers else ""))
 
     # 1. Profile: 1 warmup + 1 measured generate inside worker.py.
-    sh([
+    worker_cmd = [
         "nsys", "profile",
         "--trace=cuda,nvtx",
         "--sample=none", "--cpuctxsw=none",
@@ -83,18 +83,25 @@ def run_cell(model_alias, model_path, mode, case, python_bin: str) -> None:
         "--decode-len", str(case["decode_len"]),
         "--attention-backend", C.ATTENTION_BACKEND,
         "--measure-range", C.MEASURE_RANGE,
-    ], log_path)
+    ]
+    if num_layers is not None:
+        worker_cmd += ["--num-layers", str(num_layers)]
+    sh(worker_cmd, log_path)
 
     # 2. Export to SQLite.
     sh(["nsys", "export", "--type", "sqlite", "--force-overwrite=true",
         "--output", str(sqlite), str(rep_file)], log_path)
 
     # 3. Parse metrics.
-    sh([python_bin, str(ANALYZER), str(sqlite), str(metrics_json),
+    analyze_cmd = [python_bin, str(ANALYZER), str(sqlite), str(metrics_json),
         "--measure-range", C.MEASURE_RANGE,
         "--model", model_alias, "--mode", mode, "--case", case["id"],
         "--prompt-len", str(case["prompt_len"]),
-        "--decode-len", str(case["decode_len"])], log_path)
+        "--decode-len", str(case["decode_len"])]
+    if num_layers is not None:
+        analyze_cmd += ["--profile-layers", str(num_layers),
+                        "--full-layers-from", str(Path(model_path) / "config.json")]
+    sh(analyze_cmd, log_path)
 
     # 4. Compress rep + sqlite for download, drop the raw files.
     gzip_into(rep_file, nsys_out / f"{case['id']}.nsys-rep.gz")
@@ -109,19 +116,21 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--models", nargs="+", help="Restrict to these model aliases.")
     p.add_argument("--modes", nargs="+", help="Restrict to these modes.")
     p.add_argument("--cases", nargs="+", help="Restrict to these case ids.")
+    p.add_argument("--extrap", action="store_true",
+                   help="Also profile the reduced-layer extrapolation MoEs.")
     return p.parse_args()
 
 
 def main() -> int:
     args = parse_args()
-    for model_alias, model_path, mode, case in C.combos():
+    for model_alias, model_path, mode, case, num_layers in C.combos(include_extrap=args.extrap):
         if args.models and model_alias not in args.models:
             continue
         if args.modes and mode not in args.modes:
             continue
         if args.cases and case["id"] not in args.cases:
             continue
-        run_cell(model_alias, model_path, mode, case, args.python)
+        run_cell(model_alias, model_path, mode, case, num_layers, args.python)
     print("All requested cells complete.")
     return 0
 
