@@ -4,63 +4,63 @@
   "case": "case6",
   "prompt_len": 16,
   "decode_len": 512,
-  "e2e_ns": 1152516433,
-  "e2e_ms": 1152.516433,
-  "total_kernels": 9343,
-  "total_kernel_gpu_ns": 22554495,
-  "total_kernel_gpu_ms": 22.554495,
+  "e2e_ns": 1242849135,
+  "e2e_ms": 1242.849135,
+  "total_kernels": 186496,
+  "total_kernel_gpu_ns": 1198863586,
+  "total_kernel_gpu_ms": 1198.863586,
   "launch_count": 9856,
-  "launch_overhead_ns": 76647117,
-  "launch_overhead_ms": 76.647117,
-  "launch_overhead_pct": 6.65041424185923,
+  "launch_overhead_ns": 342223144,
+  "launch_overhead_ms": 342.223144,
+  "launch_overhead_pct": 27.535372907509004,
   "launch_by_api": {
     "cuLaunchKernelEx": {
       "count": 834,
-      "overhead_ns": 3479101
+      "overhead_ns": 4702887
     },
     "cudaGraphLaunch_v10000": {
       "count": 512,
-      "overhead_ns": 30877714
+      "overhead_ns": 277640537
     },
     "cudaLaunchKernelExC_v11060": {
       "count": 1146,
-      "overhead_ns": 5446415
+      "overhead_ns": 7918680
     },
     "cudaLaunchKernel_v7000": {
       "count": 7364,
-      "overhead_ns": 36843887
+      "overhead_ns": 51961040
     }
   },
   "top5_kernels": [
     {
-      "name": "reduce_kernel",
-      "count": 512,
-      "gpu_ns": 4279801,
-      "gpu_ms": 4.279801
+      "name": "nvjet_sm90_tst_64x8_64x16_4x1_v_bz_TNT",
+      "count": 27648,
+      "gpu_ns": 352195589,
+      "gpu_ms": 352.195589
     },
     {
-      "name": "vectorized_elementwise_kernel",
-      "count": 1623,
-      "gpu_ns": 3873055,
-      "gpu_ms": 3.873055
-    },
-    {
-      "name": "index_elementwise_kernel",
-      "count": 1038,
-      "gpu_ns": 3024220,
-      "gpu_ms": 3.02422
-    },
-    {
-      "name": "unrolled_elementwise_kernel",
-      "count": 1546,
-      "gpu_ns": 2747193,
-      "gpu_ms": 2.747193
-    },
-    {
-      "name": "create_flashinfer_kv_indices_triton",
+      "name": "nvjet_sm90_tst_512x8_64x3_2x1_v_bz_TNT",
       "count": 513,
-      "gpu_ns": 998110,
-      "gpu_ms": 0.99811
+      "gpu_ns": 170646179,
+      "gpu_ms": 170.646179
+    },
+    {
+      "name": "nvjet_sm90_tst_64x8_64x16_2x1_v_bz_splitK_TNT",
+      "count": 12288,
+      "gpu_ns": 133690765,
+      "gpu_ms": 133.690765
+    },
+    {
+      "name": "nvjet_sm90_tst_64x8_64x16_2x1_v_bz_TNT",
+      "count": 9216,
+      "gpu_ns": 125406453,
+      "gpu_ms": 125.406453
+    },
+    {
+      "name": "nvjet_sm90_tst_64x8_64x16_1x1_h_bz_TNT",
+      "count": 9216,
+      "gpu_ns": 122546054,
+      "gpu_ms": 122.546054
     }
   ]
 }
