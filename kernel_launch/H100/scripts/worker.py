@@ -2,12 +2,14 @@
 
 Launched (under nsys) by run_profiling.py once per (model, mode, case) cell.
 It performs exactly ONE warmup generate() followed by ONE measured generate().
-The measured call is wrapped in an NVTX range so the offline analysis can
-isolate its kernels on the nsys timeline.
 
-The SGLang Engine runs the model in a separate scheduler process, but a
-blocking generate() in this process fully encloses that subprocess work on the
-shared nsys timeline, so the NVTX window emitted here is a valid time filter.
+The measured generate() is bracketed by cudaProfilerStart/Stop. Combined with
+nsys `--capture-range=cudaProfilerApi --capture-range-end=stop`, nsys records
+ONLY the measured request (model load + warmup happen before Start). Crucially,
+cudaProfilerStop forces a CUPTI flush while the SGLang scheduler subprocess is
+still alive, so GPU kernel activity -- including kernels inside CUDA graphs and
+for large MoEs -- is reliably captured (no dependence on buffer-fill or on a
+clean subprocess teardown).
 """
 
 from __future__ import annotations
@@ -31,6 +33,20 @@ def build_input_ids(model_path: str, prompt_len: int) -> list[int]:
     return ids
 
 
+def cuda_profiler(action: str) -> None:
+    """Start/stop the CUDA profiler; nsys keys its capture range off these.
+
+    A synchronize() before each call ensures all prior GPU work is done, so the
+    measured region starts clean and cudaProfilerStop flushes a complete trace.
+    """
+    torch.cuda.synchronize()
+    cudart = torch.cuda.cudart()
+    fn = cudart.cudaProfilerStart if action == "start" else cudart.cudaProfilerStop
+    ret = fn()
+    if ret not in (0, None):
+        print(f"[warn] cudaProfiler{action} returned {ret}")
+
+
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser()
     p.add_argument("--model-path", required=True)
@@ -39,7 +55,6 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--decode-len", type=int, required=True)
     p.add_argument("--attention-backend", default="flashinfer")
     p.add_argument("--tp", type=int, default=1)
-    p.add_argument("--measure-range", default="measure")
     return p.parse_args()
 
 
@@ -63,15 +78,15 @@ def main() -> int:
     max_new_tokens = max(args.decode_len, 1)
     sampling_params = {"temperature": 0.0, "max_new_tokens": max_new_tokens, "ignore_eos": True}
 
-    # Warmup: builds CUDA graphs (in cudagraph mode) and JIT/autotune caches.
+    # Warmup (not profiled): builds CUDA graphs and JIT/autotune caches.
     engine.generate(input_ids=input_ids, sampling_params=sampling_params)
 
-    # Measured run, bracketed by the NVTX range that analysis keys off.
-    torch.cuda.nvtx.range_push(args.measure_range)
+    # Measured run, captured between cudaProfilerStart/Stop.
+    cuda_profiler("start")
     t0 = time.perf_counter()
     engine.generate(input_ids=input_ids, sampling_params=sampling_params)
     t1 = time.perf_counter()
-    torch.cuda.nvtx.range_pop()
+    cuda_profiler("stop")
 
     print(json.dumps({
         "measure_wall_s": t1 - t0,
@@ -80,25 +95,8 @@ def main() -> int:
         "mode": args.mode,
     }))
 
-    # Force CUPTI device-activity buffers to flush. On CUDA 11+ nsys only saves
-    # a device buffer when it FILLS; a short measure region (e.g. a single
-    # prefill) never fills one, so its kernel records would be dropped when the
-    # SGLang scheduler subprocess is killed -- the export then lacks the
-    # CUPTI_ACTIVITY_KIND_KERNEL table entirely. Running extra cheap generates
-    # after the NVTX window fills the buffer; the resulting buffer-full flush
-    # also delivers the measured kernels. This work is outside 'measure', so the
-    # analysis window (filtered by NVTX time) excludes it.
-    flush_ids = input_ids[:16]
-    flush_sp = {"temperature": 0.0, "max_new_tokens": 1, "ignore_eos": True}
-    for _ in range(40):
-        engine.generate(input_ids=flush_ids, sampling_params=flush_sp)
-    time.sleep(2)
-
-    # shutdown() teardown is best-effort: for large MoEs SGLang spawns many
-    # compile/expert workers that nsys keeps from being reaped within its 60s
-    # SIGKILL window, so shutdown() raises. The profiling data is already
-    # captured by this point, and the stuck processes die once nsys detaches on
-    # exit -- so a shutdown failure must not fail the cell.
+    # Teardown is best-effort and happens after nsys has already stopped and
+    # flushed; a large-MoE kill_process_tree failure here cannot lose data.
     try:
         engine.shutdown()
     except Exception as e:
