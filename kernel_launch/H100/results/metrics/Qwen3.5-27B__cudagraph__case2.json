@@ -4,63 +4,63 @@
   "case": "case2",
   "prompt_len": 1024,
   "decode_len": 0,
-  "e2e_ns": 106452077,
-  "e2e_ms": 106.452077,
-  "total_kernels": 2044,
-  "total_kernel_gpu_ns": 101812945,
-  "total_kernel_gpu_ms": 101.812945,
+  "e2e_ns": 122470662,
+  "e2e_ms": 122.470662,
+  "total_kernels": 2089,
+  "total_kernel_gpu_ns": 105134575,
+  "total_kernel_gpu_ms": 105.134575,
   "launch_count": 1746,
-  "launch_overhead_ns": 8030483,
-  "launch_overhead_ms": 8.030483,
-  "launch_overhead_pct": 7.543754172123856,
+  "launch_overhead_ns": 13916515,
+  "launch_overhead_ms": 13.916515,
+  "launch_overhead_pct": 11.363141811056758,
   "launch_by_api": {
     "cuLaunchKernelEx": {
       "count": 805,
-      "overhead_ns": 2968971
+      "overhead_ns": 5144524
     },
     "cudaGraphLaunch_v10000": {
       "count": 1,
-      "overhead_ns": 1267859
+      "overhead_ns": 2145201
     },
     "cudaLaunchKernelExC_v11060": {
       "count": 308,
-      "overhead_ns": 1332236
+      "overhead_ns": 2289784
     },
     "cudaLaunchKernel_v7000": {
       "count": 632,
-      "overhead_ns": 2461417
+      "overhead_ns": 4337006
     }
   },
   "top5_kernels": [
     {
       "name": "nvjet_sm90_tst_320x128_64x3_1x2_h_bz_coopB_TNT",
       "count": 192,
-      "gpu_ns": 57538254,
-      "gpu_ms": 57.538254
+      "gpu_ns": 59191929,
+      "gpu_ms": 59.191929
     },
     {
       "name": "nvjet_sm90_tst_256x128_64x4_1x2_h_bz_coopA_TNT",
       "count": 48,
-      "gpu_ns": 11957428,
-      "gpu_ms": 11.957428
+      "gpu_ns": 12387716,
+      "gpu_ms": 12.387716
     },
     {
       "name": "nvjet_sm90_tst_176x128_64x5_1x2_h_bz_TNN",
       "count": 16,
-      "gpu_ns": 3504183,
-      "gpu_ms": 3.504183
+      "gpu_ns": 3622599,
+      "gpu_ms": 3.622599
     },
     {
       "name": "elementwise_kernel",
       "count": 347,
-      "gpu_ns": 3425457,
-      "gpu_ms": 3.425457
+      "gpu_ns": 3430569,
+      "gpu_ms": 3.430569
     },
     {
       "name": "nvjet_sm90_tst_384x8_64x4_4x1_v_bz_TNT",
-      "count": 20,
-      "gpu_ns": 2445837,
-      "gpu_ms": 2.445837
+      "count": 23,
+      "gpu_ns": 2851583,
+      "gpu_ms": 2.851583
     }
   ]
 }
