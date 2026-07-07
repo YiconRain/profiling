@@ -4,59 +4,59 @@
   "case": "case1",
   "prompt_len": 256,
   "decode_len": 0,
-  "e2e_ns": 104294280,
-  "e2e_ms": 104.29428,
+  "e2e_ns": 114322651,
+  "e2e_ms": 114.322651,
   "total_kernels": 2723,
-  "total_kernel_gpu_ns": 48750385,
-  "total_kernel_gpu_ms": 48.750385,
+  "total_kernel_gpu_ns": 49453055,
+  "total_kernel_gpu_ms": 49.453055,
   "launch_count": 2723,
-  "launch_overhead_ns": 10279751,
-  "launch_overhead_ms": 10.279751,
-  "launch_overhead_pct": 9.85648589740492,
+  "launch_overhead_ns": 9959009,
+  "launch_overhead_ms": 9.959009,
+  "launch_overhead_pct": 8.711317409880568,
   "launch_by_api": {
     "cuLaunchKernelEx": {
       "count": 1270,
-      "overhead_ns": 4671684
+      "overhead_ns": 4540297
     },
     "cudaLaunchKernelExC_v11060": {
       "count": 709,
-      "overhead_ns": 2730587
+      "overhead_ns": 2624139
     },
     "cudaLaunchKernel_v7000": {
       "count": 744,
-      "overhead_ns": 2877480
+      "overhead_ns": 2794573
     }
   },
   "top5_kernels": [
     {
       "name": "nvjet_sm90_tst_176x128_64x5_1x2_h_bz_TNN",
       "count": 64,
-      "gpu_ns": 9032099,
-      "gpu_ms": 9.032099
+      "gpu_ns": 9091968,
+      "gpu_ms": 9.091968
     },
     {
       "name": "nvjet_sm90_tst_384x8_64x4_4x1_v_bz_TNT",
       "count": 64,
-      "gpu_ns": 7766212,
-      "gpu_ms": 7.766212
+      "gpu_ns": 7874185,
+      "gpu_ms": 7.874185
     },
     {
       "name": "nvjet_sm90_tst_80x128_64x8_2x1_v_bz_TNN",
       "count": 128,
-      "gpu_ns": 7505973,
-      "gpu_ms": 7.505973
+      "gpu_ns": 7616959,
+      "gpu_ms": 7.616959
     },
     {
       "name": "nvjet_sm90_tst_128x8_64x12_4x1_v_bz_splitK_TNT",
       "count": 64,
-      "gpu_ns": 3946515,
-      "gpu_ms": 3.946515
+      "gpu_ns": 3949186,
+      "gpu_ms": 3.949186
     },
     {
       "name": "nvjet_sm90_tst_256x128_64x4_1x2_h_bz_coopA_TNT",
       "count": 48,
-      "gpu_ns": 3330494,
-      "gpu_ms": 3.330494
+      "gpu_ns": 3550186,
+      "gpu_ms": 3.550186
     }
   ]
 }
