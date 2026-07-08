@@ -53,11 +53,15 @@ def write_readme(rows: list[dict], out: Path) -> None:
     lines.append("本文档由 `scripts/summarize.py` 自动生成，汇总 SGLang（FlashInfer 后端）"
                  "在 Qwen3.5 系列上的 kernel launch 数量与开销。\n")
     lines.append("## 指标说明\n")
-    lines.append("- **e2e_ms**：被测 `generate()` 的端到端时间（NVTX `measure` 窗口时长）。\n"
-                 "- **total_kernels**：窗口内 GPU kernel 执行次数。\n"
-                 "- **launch_count**：窗口内 `cudaLaunchKernel*` 主机侧 API 调用次数。\n"
-                 "- **launch_overhead_ms / pct**：这些 launch 调用累计的主机耗时，"
-                 "以及其占端到端时间的比例。\n")
+    lines.append("> 采集用 `cudaProfilerStart/Stop` + nsys `--capture-range=cudaProfilerApi`，"
+                 "只录被测的那一次 `generate()`；`--cuda-graph-trace=node` 记录 CUDA graph 内的每个 kernel。\n")
+    lines.append("- **e2e_ms**：被测 `generate()` 的端到端时间（采集区间内主机 API 的时间跨度）。\n"
+                 "- **total_kernels**：GPU kernel 执行次数（含 CUDA graph 内节点）。\n"
+                 "- **launch_count**：`cudaLaunchKernel*` / `cudaGraphLaunch*` / `cuLaunchKernel*` 主机侧 API 调用次数。\n"
+                 "- **launch_overhead_ms / pct**：这些 launch 调用累计的主机耗时，以及其占端到端时间的比例。\n"
+                 "- 口径提醒：launch 占比在 compute-bound 时会被 overlap/反压高估、launch-bound 时低估，"
+                 "衡量真实影响更宜看 GPU 空闲率或 eager→cudagraph 加速比；`total_kernel_gpu_ms` 是求和，"
+                 "kernel 并发时可能 > e2e。\n")
 
     # Main table grouped by model.
     models = [m for m in C.MODELS if any(r["model"] == m for r in rows)]
