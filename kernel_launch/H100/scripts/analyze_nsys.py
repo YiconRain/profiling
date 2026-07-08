@@ -6,12 +6,21 @@ therefore count every kernel / launch in the database directly.
 
 Metrics:
   * total_kernels        - number of GPU kernel executions
-  * total_kernel_gpu_ns  - summed GPU time of those kernels
+  * total_kernel_gpu_ns  - SUMMED GPU time of kernels (double counts overlap)
+  * gpu_busy_ns          - UNION of GPU activity intervals (kernels+memcpy+memset);
+                           the real "GPU busy" time (<= e2e), overlap-safe
+  * gpu_bubble_ratio     - (e2e_ns - gpu_busy_ns) / e2e_ns; fraction of e2e the
+                           GPU sat idle (launch + host + sync bubbles)
   * launch_count         - number of kernel-launch host API calls
   * launch_overhead_ns   - summed host time spent in those launch calls
-  * launch_overhead_pct  - launch_overhead_ns / e2e_ns * 100
+  * launch_overhead_pct  - launch_overhead_ns / e2e_ns * 100 (diagnostic only)
   * e2e_ns               - span of the captured region (host API first..last)
   * top5                 - five kernels with the largest summed GPU time
+
+Note on metric choice: prefer gpu_bubble_ratio (and eager->cudagraph deltas of
+it) over launch_overhead_pct -- the latter is inflated by launch-queue back-
+pressure in compute-bound cases and misses the host-framework gaps that dominate
+launch-bound decode.
 
 Usage: analyze_nsys.py <db.sqlite> <output.json> [metadata flags]
 """
@@ -71,6 +80,35 @@ def launch_stats(con: sqlite3.Connection):
     return count, dur, by_api
 
 
+def gpu_busy_ns(con: sqlite3.Connection) -> int:
+    """Union (merged) coverage of all GPU activity intervals.
+
+    Sums kernel + memcpy + memset execution windows with overlaps merged, so it
+    is the true GPU-busy time (<= e2e) even when kernels run concurrently across
+    streams (where a naive sum of durations would exceed e2e).
+    """
+    intervals = []
+    for table in ("CUPTI_ACTIVITY_KIND_KERNEL",
+                  "CUPTI_ACTIVITY_KIND_MEMCPY",
+                  "CUPTI_ACTIVITY_KIND_MEMSET"):
+        if table_exists(con, table):
+            intervals += con.execute(f"SELECT start, end FROM {table}").fetchall()
+    intervals = [(b, e) for b, e in intervals if b is not None and e is not None]
+    if not intervals:
+        return 0
+    intervals.sort()
+    busy = 0
+    cs, ce = intervals[0]
+    for b, e in intervals[1:]:
+        if b <= ce:
+            ce = max(ce, e)
+        else:
+            busy += ce - cs
+            cs, ce = b, e
+    busy += ce - cs
+    return int(busy)
+
+
 def e2e_span_ns(con: sqlite3.Connection) -> int:
     """Wall span of the captured region: earliest..latest host API call.
 
@@ -95,12 +133,14 @@ def main() -> int:
     p.add_argument("--case")
     p.add_argument("--prompt-len", type=int)
     p.add_argument("--decode-len", type=int)
+    p.add_argument("--batch-size", type=int)
     args = p.parse_args()
 
     con = sqlite3.connect(args.db)
     if not table_exists(con, "CUPTI_ACTIVITY_KIND_KERNEL"):
         raise SystemExit("No CUPTI_ACTIVITY_KIND_KERNEL table: capture produced no kernels.")
     e2e_ns = e2e_span_ns(con)
+    busy_ns = gpu_busy_ns(con)
     total_kernels, total_gpu_ns, top5 = kernel_stats(con)
     launch_count, launch_ns, launch_by_api = launch_stats(con)
     con.close()
@@ -111,8 +151,12 @@ def main() -> int:
         "case": args.case,
         "prompt_len": args.prompt_len,
         "decode_len": args.decode_len,
+        "batch_size": args.batch_size,
         "e2e_ns": e2e_ns,
         "e2e_ms": e2e_ns / 1e6,
+        "gpu_busy_ns": busy_ns,
+        "gpu_busy_ms": busy_ns / 1e6,
+        "gpu_bubble_ratio": (e2e_ns - busy_ns) / e2e_ns if e2e_ns else 0.0,
         "total_kernels": total_kernels,
         "total_kernel_gpu_ns": total_gpu_ns,
         "total_kernel_gpu_ms": total_gpu_ns / 1e6,
@@ -127,7 +171,7 @@ def main() -> int:
     with open(args.out, "w") as f:
         json.dump(metrics, f, indent=2)
     print(f"[analyze] {args.out}: {total_kernels} kernels, launch_count {launch_count}, "
-          f"launch {metrics['launch_overhead_pct']:.2f}% of e2e")
+          f"gpu_bubble {metrics['gpu_bubble_ratio']*100:.1f}%")
     return 0
 
 

@@ -97,6 +97,7 @@ def run_cell(model_alias, model_path, mode, case, python_bin: str) -> None:
         "--mode", mode,
         "--prompt-len", str(case["prompt_len"]),
         "--decode-len", str(case["decode_len"]),
+        "--batch-size", str(case["batch_size"]),
         "--attention-backend", C.ATTENTION_BACKEND,
     ], log_path)
 
@@ -108,7 +109,8 @@ def run_cell(model_alias, model_path, mode, case, python_bin: str) -> None:
     sh([python_bin, str(ANALYZER), str(sqlite), str(metrics_json),
         "--model", model_alias, "--mode", mode, "--case", case["id"],
         "--prompt-len", str(case["prompt_len"]),
-        "--decode-len", str(case["decode_len"])], log_path)
+        "--decode-len", str(case["decode_len"]),
+        "--batch-size", str(case["batch_size"])], log_path)
 
     # 4. Compress rep + sqlite for download, drop the raw files.
     gzip_into(rep_file, nsys_out / f"{case['id']}.nsys-rep.gz")

@@ -1,46 +1,48 @@
-# H100 Kernel Launch 开销实验
+# H100 Kernel Launch 开销实验（Experiment 2）
 
-本目录用于在 **单张 H100** 上，测量 **SGLang（FlashInfer 后端）** 在 Qwen3.5 系列模型上的
-**kernel launch（内核启动）数量与开销**，并分析其对不同模型规模、不同推理场景的影响。
+本目录用于在 **单张 H100** 上，测量 **SGLang（FlashInfer 后端）** 在 **Qwen3 系列**模型上的
+**kernel launch 数量、开销与其造成的 GPU 空闲(bubble)**，并分析其对不同模型规模、prefill/decode、
+以及 **batch size** 的影响。核心目的:用 **eager → cudagraph** 的对比,量化 kernel launch / host
+开销的真实影响,为 megakernel(大 kernel 减 launch)这一 motivation 提供数据。
+
+> 第一次正式实验(Qwen3.5 系列)的数据已用 git tag **`experiment-1`** 归档。
 
 ## 1. 实验目标
 
-对每一个 `(模型, 执行模式, 测试用例)` 组合，提取三类指标：
+对每一个 `(模型, 执行模式, 测试用例)` 组合,提取:
 
-1. **kernel launch 总次数**；
-2. **kernel launch 的时间开销**（绝对耗时，以及占端到端时间的百分比）；
-3. **耗时最高的 Top-5 kernel**。
+1. **GPU bubble 占比**(核心)= `(e2e − gpu_busy) / e2e`,即 GPU 因 launch/host/sync 而空转的比例;
+2. **kernel launch 次数 / launch 开销**,以及 **kernel 执行数、GPU 忙碌时间(区间并集)**;
+3. **耗时最高的 Top-5 kernel**;
+4. 由此得出 **eager → cudagraph** 的 Δbubble 与 e2e 加速比。
 
 ## 2. 实验维度
 
 | 维度 | 取值 |
 |------|------|
 | 框架 | SGLang（使用 `envs/` 中约定的 `sgl_env` 环境，见 `envs/envs.md`） |
-| 模型 | 稠密：Qwen3.5-27B / 9B / 4B / 2B / 0.8B；MoE：Qwen3-30B-A3B（30B 总参 / 3B 激活） |
+| 模型 | 稠密：Qwen3-0.6B / 1.7B / 8B / 14B；MoE：Qwen3-30B-A3B（30B 总参 / 3B 激活，单卡 80GB 能装下的最小 MoE） |
 | Attention 后端 | FlashInfer |
 | 执行模式 | eager（关闭 CUDA Graph）、cudagraph（开启 CUDA Graph） |
-| Batch Size | 1 |
+| Batch Size | 1（prefill+decode）；4 / 8 / 16（仅 decode，做 batch 扫描） |
 
-### 测试用例（沿用需求编号，无 case4）
+### 测试用例（13 个 = BS×prompt×decode 组合）
 
-| 用例 | Prompt 长度 | Decode 长度 | 说明 |
-|------|------------|------------|------|
-| case1 | 256 | 0 | 纯 prefill |
-| case2 | 1024 | 0 | 纯 prefill |
-| case3 | 8192 | 0 | 纯 prefill（长上下文） |
-| case5 | 16 | 128 | 短 prompt + 中等 decode |
-| case6 | 16 | 512 | 短 prompt + 较长 decode |
-| case7 | 16 | 1024 | 短 prompt + 长 decode |
+| 用例 id | BS | Prompt | Decode | 说明 |
+|------|----|--------|--------|------|
+| bs1_p16_d0 / p256 / p1k / p4k / p8k | 1 | 16/256/1k/4k/8k | 0 | 纯 prefill（不同上下文长度） |
+| bs1_p16_d128 / d512 | 1 | 16 | 128/512 | 纯 decode |
+| bs4_p16_d128 / d512 | 4 | 16 | 128/512 | decode，batch 扫描 |
+| bs8_p16_d128 / d512 | 8 | 16 | 128/512 | decode，batch 扫描 |
+| bs16_p16_d128 / d512 | 16 | 16 | 128/512 | decode，batch 扫描 |
 
 > **关于 "Decode 0"**：解码器至少产出 1 个 token，因此 prefill-only 用例强制
-> `max_new_tokens=1`，该 token 与 prefill 属于同一次前向，trace 捕获到的即 prefill 阶段的 kernel。
+> `max_new_tokens=1`，该 token 与 prefill 同属一次前向，trace 捕获到的即 prefill 阶段的 kernel。
+> **BS>1**：把同一 prompt 复制 N 份组成 batch，N 条序列 lockstep 解码 —— 用于观察 launch 影响
+> **随 batch 增大而衰减**的趋势(batch 越大,kernel 越大、GPU 越饱和,launch 越藏得住)。
 
-共 `6 模型 × 2 模式 × 6 用例 = 72` 个实验组合。
-
-> **为什么 MoE 用 Qwen3-30B-A3B 而非 Qwen3.5-35B-A3B**：最小的 Qwen3.5 MoE 是
-> 35B-A3B，bf16 权重约 70GB，加上 KV cache / 激活 / CUDA Graph 缓冲后放不进单张 80GB
-> H100；下一档 Qwen3.5 MoE 更是 122B 起步。因此 MoE 对照选用能装下的 Qwen3-30B-A3B
-> （约 60GB，留约 20GB 余量），它与 Qwen3.5 MoE 同为 3B 激活、架构同源。
+共 `5 模型 × 2 模式 × 13 用例 = 130` 个实验组合。MoE 选 Qwen3-30B-A3B(约 60GB,单卡 80GB 留约
+20GB 余量;更大的 MoE 放不下)。
 
 ## 3. 方法论
 
@@ -73,11 +75,16 @@ generate**(模型加载、warmup 都在 Start 之前，不入库)。关键点:
 | 指标 | 定义 |
 |------|------|
 | 端到端时间 e2e | 采集区间(被测 generate)的墙钟跨度:主机 API 事件的 `max(end) − min(start)` |
+| **gpu_busy** | 所有 GPU 活动区间(kernel+memcpy+memset)取**并集**的忙碌时间(≤e2e,并发安全) |
+| **gpu_bubble_ratio**(核心) | `(e2e − gpu_busy) / e2e` = GPU 空闲占比(launch+host+sync 造成的气泡) |
 | kernel 总数 | 库内 `CUPTI_ACTIVITY_KIND_KERNEL` 记录数(含 CUDA graph 内节点) |
 | launch 次数 | kernel 启动类主机 API 调用数：`cudaLaunchKernel*` / `cudaGraphLaunch*` / `cuLaunchKernel*`（`CUPTI_ACTIVITY_KIND_RUNTIME`），另在 `launch_by_api` 中给出分项 |
-| launch 开销 | 上述 launch API 调用的累计主机耗时 |
-| launch 占比 | launch 开销 / e2e × 100% |
+| launch 开销 / 占比 | 上述 launch API 累计主机耗时,及其 / e2e(**仅诊断**,见下方口径坑) |
 | Top-5 kernel | 按累计 GPU 时间排序的前 5 个 kernel |
+
+**核心分析 = eager → cudagraph 对比**:`Δbubble = bubble(eager) − bubble(cudagraph)`(cudagraph 消掉的
+GPU 空闲)和 `speedup = e2e(eager)/e2e(cudagraph)`。Δ/加速越大 → 该场景越受 kernel launch/host 开销
+主导(decode/小模型/MoE 大),越小 → compute-bound(长 prefill/大模型 ≈1)。
 
 > **eager vs cudagraph 的解读**：eager 模式下每个 kernel 对应一次 `cudaLaunchKernel`，
 > 因此 launch 次数≈kernel 数、launch 开销占比高；cudagraph 模式下同样数量的 kernel
@@ -107,8 +114,8 @@ kernel_launch/H100/
 ```
 
 `results/nsys/` 按 `模型/模式/用例` 组织，例如
-`results/nsys/Qwen3.5-9B/eager/case3.nsys-rep.gz`。将其下载到本地后 `gunzip`，即可用
-Nsight Systems GUI 打开做可视化分析。
+`results/nsys/Qwen3-8B/eager/bs1_p8k_d0.nsys-rep.gz`。将其下载到本地后 `gunzip`，即可用
+Nsight Systems GUI 打开做可视化分析。**每个 case 的 rep 和 sqlite 都会压缩保留**。
 
 ## 5. 如何运行
 
@@ -116,11 +123,11 @@ Nsight Systems GUI 打开做可视化分析。
 （NVIDIA PyTorch 镜像位于 `/usr/local/cuda/bin`）。
 
 ```bash
-# 一键跑完：下载模型（5 个 Qwen3.5 稠密 + Qwen3-30B-A3B）-> 逐组合 nsys 采集 -> 汇总
+# 一键跑完：下载 Qwen3 系列(4 稠密 + 30B-A3B) -> 逐组合 nsys 采集 -> 汇总
 bash kernel_launch/H100/scripts/run_all.sh
 
 # 可选：只跑部分组合（参数透传给 run_profiling.py）
-bash kernel_launch/H100/scripts/run_all.sh --models Qwen3.5-0.8B --modes eager
+bash kernel_launch/H100/scripts/run_all.sh --models Qwen3-8B --modes eager --cases bs1_p8k_d0
 ```
 
 脚本可重入：已完成的组合（对应 `results/metrics/*.json` 已存在）会被跳过。

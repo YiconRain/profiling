@@ -8,13 +8,14 @@ import sys
 from pathlib import Path
 
 
-# Qwen3 series. Dense 0.6B/1.7B/8B plus Qwen3-30B-A3B, the small Qwen3 MoE
+# Qwen3 series. Dense 0.6B/1.7B/8B/14B plus Qwen3-30B-A3B, the small Qwen3 MoE
 # (30B total / 3B active) that fits on a single 80GB H100 (the 35B Qwen3.5 MoE
 # does not).
 QWEN3_SPECS = {
     "Qwen3-0.6B": "Qwen/Qwen3-0.6B",
     "Qwen3-1.7B": "Qwen/Qwen3-1.7B",
     "Qwen3-8B": "Qwen/Qwen3-8B",
+    "Qwen3-14B": "Qwen/Qwen3-14B",
     "Qwen3-30B-A3B": "Qwen/Qwen3-30B-A3B",
 }
 

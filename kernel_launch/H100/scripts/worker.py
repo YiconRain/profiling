@@ -53,6 +53,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--mode", choices=["eager", "cudagraph"], required=True)
     p.add_argument("--prompt-len", type=int, required=True)
     p.add_argument("--decode-len", type=int, required=True)
+    p.add_argument("--batch-size", type=int, default=1)
     p.add_argument("--attention-backend", default="flashinfer")
     p.add_argument("--tp", type=int, default=1)
     return p.parse_args()
@@ -60,7 +61,10 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
-    input_ids = build_input_ids(args.model_path, args.prompt_len)
+    # One prompt of the requested length, replicated to the batch size. Batched
+    # sequences decode in lockstep -- the point of the BS>1 cases.
+    ids = build_input_ids(args.model_path, args.prompt_len)
+    input_ids = [ids for _ in range(args.batch_size)]
 
     engine = Engine(
         model_path=args.model_path,
@@ -92,6 +96,7 @@ def main() -> int:
         "measure_wall_s": t1 - t0,
         "prompt_len": args.prompt_len,
         "decode_len": args.decode_len,
+        "batch_size": args.batch_size,
         "mode": args.mode,
     }))
 
