@@ -42,10 +42,6 @@ CASES = [
 
 BATCH_SIZE = 1
 
-# NVTX range name that marks the single profiled generate() call. Analysis
-# counts only the kernels/launches that fall inside this time window.
-MEASURE_RANGE = "measure"
-
 # Result / working directories (relative to project root).
 RESULTS_DIR = "kernel_launch/H100/results"
 NSYS_DIR = "kernel_launch/H100/results/nsys"       # compressed .nsys-rep + .sqlite

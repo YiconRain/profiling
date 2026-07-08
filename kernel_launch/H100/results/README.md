@@ -4,10 +4,13 @@
 
 ## 指标说明
 
-- **e2e_ms**：被测 `generate()` 的端到端时间（NVTX `measure` 窗口时长）。
-- **total_kernels**：窗口内 GPU kernel 执行次数。
-- **launch_count**：窗口内 `cudaLaunchKernel*` 主机侧 API 调用次数。
+> 采集用 `cudaProfilerStart/Stop` + nsys `--capture-range=cudaProfilerApi`，只录被测的那一次 `generate()`；`--cuda-graph-trace=node` 记录 CUDA graph 内的每个 kernel。
+
+- **e2e_ms**：被测 `generate()` 的端到端时间（采集区间内主机 API 的时间跨度）。
+- **total_kernels**：GPU kernel 执行次数（含 CUDA graph 内节点）。
+- **launch_count**：`cudaLaunchKernel*` / `cudaGraphLaunch*` / `cuLaunchKernel*` 主机侧 API 调用次数。
 - **launch_overhead_ms / pct**：这些 launch 调用累计的主机耗时，以及其占端到端时间的比例。
+- 口径提醒：launch 占比在 compute-bound 时会被 overlap/反压高估、launch-bound 时低估，衡量真实影响更宜看 GPU 空闲率或 eager→cudagraph 加速比；`total_kernel_gpu_ms` 是求和，kernel 并发时可能 > e2e。
 
 
 ## Qwen3.5-0.8B

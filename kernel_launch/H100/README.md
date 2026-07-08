@@ -48,34 +48,50 @@
 
 每个组合执行 **1 次 warmup + 1 次正式测量**：
 
-- warmup 触发 CUDA Graph 捕获（cudagraph 模式）以及 JIT / autotune 缓存；
-- 正式测量的 `generate()` 被包在 NVTX range `measure` 中。
+- warmup(不采集)触发 CUDA Graph 捕获（cudagraph 模式）以及 JIT / autotune 缓存；
+- 正式测量的 `generate()` 用 `cudaProfilerStart/Stop` 括起来(见 3.2)。
 
 `worker.py` 里关闭了 radix（prefix）cache（`disable_radix_cache=True`）。否则 warmup 与
 测量使用相同 prompt 时，测量阶段会命中前缀缓存，导致 prefill kernel 消失、测量失真。
 
-### 3.2 为什么用 NVTX 时间窗口过滤
+### 3.2 用 cudaProfilerApi 限定采集范围(关键)
 
-SGLang 的模型前向运行在独立的 scheduler 子进程中，而 NVTX `measure` 由主进程发出。由于
-`generate()` 是阻塞调用，它在 nsys 的统一时间线上完整地"包住"了子进程的 GPU 工作。因此
-分析阶段按 **时间窗口重叠**（而非线程归属）筛选 kernel，可跨进程正确归集测量区间的 kernel。
+`worker.py` 在被测 `generate()` 前后调用 `torch.cuda.cudart().cudaProfilerStart()/Stop()`，
+nsys 用 `--capture-range=cudaProfilerApi --capture-range-end=stop`，于是**只录制被测的这一次
+generate**(模型加载、warmup 都在 Start 之前，不入库)。关键点:
+
+- **`cudaProfilerStop` 会强制 CUPTI flush**，此时 SGLang 的 scheduler 子进程仍然存活,所以
+  子进程里的 GPU kernel 活动(包括 **CUDA graph 内部**、以及大 MoE)都能被可靠捕获 ——
+  不依赖缓冲区填满、也不依赖子进程干净退出(这解决了早期"0 kernel"的采集失败)。
+- 因为采集范围本身就是被测区间,分析阶段**直接统计库里的全部 kernel/launch**,无需再按时间
+  窗口过滤。
+- nsys 加 **`--cuda-graph-trace=node`**:记录 CUDA graph 内的**每个 kernel 节点**(默认只记一次
+  graph launch),否则 cudagraph 的 kernel 数会被严重少算甚至为 0。eager 下该参数无副作用。
 
 ### 3.3 指标定义
 
 | 指标 | 定义 |
 |------|------|
-| 端到端时间 e2e | NVTX `measure` 窗口的时长 |
-| kernel 总数 | 窗口内 `CUPTI_ACTIVITY_KIND_KERNEL` 记录数 |
-| launch 次数 | 窗口内 kernel 启动类主机 API 调用数：`cudaLaunchKernel*` / `cudaGraphLaunch*` / `cuLaunchKernel*`（`CUPTI_ACTIVITY_KIND_RUNTIME`），另在 `launch_by_api` 中给出分项 |
+| 端到端时间 e2e | 采集区间(被测 generate)的墙钟跨度:主机 API 事件的 `max(end) − min(start)` |
+| kernel 总数 | 库内 `CUPTI_ACTIVITY_KIND_KERNEL` 记录数(含 CUDA graph 内节点) |
+| launch 次数 | kernel 启动类主机 API 调用数：`cudaLaunchKernel*` / `cudaGraphLaunch*` / `cuLaunchKernel*`（`CUPTI_ACTIVITY_KIND_RUNTIME`），另在 `launch_by_api` 中给出分项 |
 | launch 开销 | 上述 launch API 调用的累计主机耗时 |
 | launch 占比 | launch 开销 / e2e × 100% |
-| Top-5 kernel | 窗口内按累计 GPU 时间排序的前 5 个 kernel |
+| Top-5 kernel | 按累计 GPU 时间排序的前 5 个 kernel |
 
 > **eager vs cudagraph 的解读**：eager 模式下每个 kernel 对应一次 `cudaLaunchKernel`，
 > 因此 launch 次数≈kernel 数、launch 开销占比高；cudagraph 模式下同样数量的 kernel
 > 由极少量 `cudaGraphLaunch`（外加少量未纳入图的 eager 调用，如采样）重放完成，
-> launch 次数和开销都大幅下降——这正是本实验要量化的核心对比。`total_kernels`（GPU
-> 端执行次数）在两种模式下口径一致，可直接比较。
+> launch 次数大幅下降——这正是本实验要量化的核心对比。`total_kernels`（GPU 端执行次数,
+> 靠 `--cuda-graph-trace=node` 保证两模式口径一致）可直接比较。
+
+> **两个度量口径的坑**(实测发现,重要):
+> - `launch_overhead / e2e`(launch 占比)**不适合**直接当"launch 影响程度":compute-bound 时
+>   launch 与 GPU 计算 overlap、且被队列反压撑大(高估);launch-bound(小模型/decode)时 launch
+>   API 很短但 GPU 大量空转(低估)。衡量真实影响更应看 **GPU 空闲率** 或 **eager→cudagraph 的
+>   e2e 加速比**。
+> - `total_kernel_gpu_ms` 是各 kernel 时长的**简单求和**,kernel 跨多 stream 并发时会 **>e2e**;
+>   真实"GPU 忙碌时间"应取所有 kernel 区间的**并集**(≤e2e)。
 
 ## 4. 目录结构
 
