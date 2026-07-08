@@ -82,16 +82,16 @@
 
 | Case | Mode | e2e (ms) | Kernels | Launches | Launch 开销 (ms) | Launch 占比 (%) |
 |---|---|---|---|---|---|---|
-| case1 (P256/D0) | eager | 104.294 | 2723 | 2723 | 10.280 | 9.86 |
-| case2 (P1024/D0) | eager | 139.495 | 2707 | 2707 | 10.201 | 7.31 |
-| case3 (P8192/D0) | eager | 846.603 | 2659 | 2659 | 267.477 | 31.59 |
-| case5 (P16/D128) | eager | 4364.764 | 125316 | 125316 | 474.235 | 10.87 |
+| case1 (P256/D0) | eager | 114.323 | 2723 | 2723 | 9.959 | 8.71 |
+| case2 (P1024/D0) | eager | 146.071 | 2645 | 2645 | 10.716 | 7.34 |
+| case3 (P8192/D0) | eager | 872.255 | 2659 | 2659 | 273.501 | 31.36 |
+| case5 (P16/D128) | eager | 4971.475 | 125316 | 125316 | 537.341 | 10.81 |
 | case6 (P16/D512) | eager | 17708.287 | 501252 | 501252 | 2126.185 | 12.01 |
 | case7 (P16/D1024) | eager | 35211.169 | 1002500 | 1002500 | 3752.907 | 10.66 |
-| case1 (P256/D0) | cudagraph | 110.255 | 2070 | 1762 | 11.773 | 10.68 |
-| case2 (P1024/D0) | cudagraph | 106.452 | 2044 | 1746 | 8.030 | 7.54 |
-| case3 (P8192/D0) | cudagraph | 813.928 | 2010 | 1698 | 266.520 | 32.74 |
-| case5 (P16/D128) | cudagraph | 2556.042 | 126679 | 4100 | 150.305 | 5.88 |
+| case1 (P256/D0) | cudagraph | 76.744 | 2080 | 1760 | 8.628 | 11.24 |
+| case2 (P1024/D0) | cudagraph | 122.471 | 2089 | 1746 | 13.917 | 11.36 |
+| case3 (P8192/D0) | cudagraph | 839.369 | 2262 | 1698 | 251.715 | 29.99 |
+| case5 (P16/D128) | cudagraph | 2580.637 | 127217 | 4100 | 164.251 | 6.36 |
 | case6 (P16/D512) | cudagraph | 10049.251 | 503376 | 11003 | 563.940 | 5.61 |
 | case7 (P16/D1024) | cudagraph | 20052.737 | 1005887 | 20228 | 1096.506 | 5.47 |
 
@@ -359,41 +359,41 @@
 
 | # | Kernel | 次数 | GPU 时间 (ms) |
 |---|---|---|---|
-| 1 | `nvjet_sm90_tst_176x128_64x5_1x2_h_bz_TNN` | 64 | 9.199 |
-| 2 | `nvjet_sm90_tst_80x128_64x8_2x1_v_bz_TNN` | 128 | 7.478 |
-| 3 | `nvjet_sm90_tst_256x128_64x4_1x2_h_bz_coopA_TNT` | 48 | 3.332 |
-| 4 | `nvjet_sm90_tst_384x8_64x4_4x1_v_bz_TNT` | 20 | 2.427 |
-| 5 | `elementwise_kernel` | 347 | 1.355 |
+| 1 | `nvjet_sm90_tst_176x128_64x5_1x2_h_bz_TNN` | 64 | 9.099 |
+| 2 | `nvjet_sm90_tst_80x128_64x8_2x1_v_bz_TNN` | 128 | 7.537 |
+| 3 | `nvjet_sm90_tst_256x128_64x4_1x2_h_bz_coopA_TNT` | 48 | 3.542 |
+| 4 | `nvjet_sm90_tst_384x8_64x4_4x1_v_bz_TNT` | 21 | 2.567 |
+| 5 | `elementwise_kernel` | 347 | 1.379 |
 
 ### Qwen3.5-27B / cudagraph / case2 (P1024/D0)
 
 | # | Kernel | 次数 | GPU 时间 (ms) |
 |---|---|---|---|
-| 1 | `nvjet_sm90_tst_320x128_64x3_1x2_h_bz_coopB_TNT` | 192 | 57.538 |
-| 2 | `nvjet_sm90_tst_256x128_64x4_1x2_h_bz_coopA_TNT` | 48 | 11.957 |
-| 3 | `nvjet_sm90_tst_176x128_64x5_1x2_h_bz_TNN` | 16 | 3.504 |
-| 4 | `elementwise_kernel` | 347 | 3.425 |
-| 5 | `nvjet_sm90_tst_384x8_64x4_4x1_v_bz_TNT` | 20 | 2.446 |
+| 1 | `nvjet_sm90_tst_320x128_64x3_1x2_h_bz_coopB_TNT` | 192 | 59.192 |
+| 2 | `nvjet_sm90_tst_256x128_64x4_1x2_h_bz_coopA_TNT` | 48 | 12.388 |
+| 3 | `nvjet_sm90_tst_176x128_64x5_1x2_h_bz_TNN` | 16 | 3.623 |
+| 4 | `elementwise_kernel` | 347 | 3.431 |
+| 5 | `nvjet_sm90_tst_384x8_64x4_4x1_v_bz_TNT` | 23 | 2.852 |
 
 ### Qwen3.5-27B / cudagraph / case3 (P8192/D0)
 
 | # | Kernel | 次数 | GPU 时间 (ms) |
 |---|---|---|---|
-| 1 | `nvjet_sm90_tst_320x128_64x3_1x2_h_bz_coopB_TNT` | 208 | 489.611 |
-| 2 | `nvjet_sm90_tst_192x192_64x4_1x2_h_bz_coopB_TNN` | 48 | 99.654 |
-| 3 | `BatchPrefillWithPagedKVCacheKernel` | 21 | 61.869 |
-| 4 | `elementwise_kernel` | 347 | 24.182 |
-| 5 | `act_and_mul_kernel` | 85 | 17.571 |
+| 1 | `nvjet_sm90_tst_320x128_64x3_1x2_h_bz_coopB_TNT` | 208 | 502.169 |
+| 2 | `nvjet_sm90_tst_192x192_64x4_1x2_h_bz_coopB_TNN` | 48 | 101.850 |
+| 3 | `BatchPrefillWithPagedKVCacheKernel` | 25 | 65.006 |
+| 4 | `elementwise_kernel` | 355 | 24.893 |
+| 5 | `act_and_mul_kernel` | 101 | 17.665 |
 
 ### Qwen3.5-27B / cudagraph / case5 (P16/D128)
 
 | # | Kernel | 次数 | GPU 时间 (ms) |
 |---|---|---|---|
-| 1 | `nvjet_sm90_tst_384x8_64x4_4x1_v_bz_TNT` | 8147 | 985.939 |
-| 2 | `nvjet_sm90_tst_128x8_64x12_4x1_v_bz_splitK_TNT` | 8146 | 503.107 |
-| 3 | `nvjet_sm90_tst_128x8_64x12_2x1_v_bz_TNT` | 6111 | 347.086 |
-| 4 | `nvjet_sm90_tst_64x8_64x16_2x1_v_bz_splitK_TNT` | 6111 | 317.898 |
-| 5 | `nvjet_sm90_tst_64x8_64x16_4x1_v_bz_TNT` | 8147 | 200.189 |
+| 1 | `nvjet_sm90_tst_384x8_64x4_4x1_v_bz_TNT` | 8182 | 1003.629 |
+| 2 | `nvjet_sm90_tst_128x8_64x12_4x1_v_bz_splitK_TNT` | 8182 | 505.535 |
+| 3 | `nvjet_sm90_tst_128x8_64x12_2x1_v_bz_TNT` | 6138 | 348.719 |
+| 4 | `nvjet_sm90_tst_64x8_64x16_2x1_v_bz_splitK_TNT` | 6138 | 321.357 |
+| 5 | `nvjet_sm90_tst_64x8_64x16_4x1_v_bz_TNT` | 8183 | 201.014 |
 
 ### Qwen3.5-27B / cudagraph / case6 (P16/D512)
 
@@ -419,41 +419,41 @@
 
 | # | Kernel | 次数 | GPU 时间 (ms) |
 |---|---|---|---|
-| 1 | `nvjet_sm90_tst_176x128_64x5_1x2_h_bz_TNN` | 64 | 9.032 |
-| 2 | `nvjet_sm90_tst_384x8_64x4_4x1_v_bz_TNT` | 64 | 7.766 |
-| 3 | `nvjet_sm90_tst_80x128_64x8_2x1_v_bz_TNN` | 128 | 7.506 |
-| 4 | `nvjet_sm90_tst_128x8_64x12_4x1_v_bz_splitK_TNT` | 64 | 3.947 |
-| 5 | `nvjet_sm90_tst_256x128_64x4_1x2_h_bz_coopA_TNT` | 48 | 3.330 |
+| 1 | `nvjet_sm90_tst_176x128_64x5_1x2_h_bz_TNN` | 64 | 9.092 |
+| 2 | `nvjet_sm90_tst_384x8_64x4_4x1_v_bz_TNT` | 64 | 7.874 |
+| 3 | `nvjet_sm90_tst_80x128_64x8_2x1_v_bz_TNN` | 128 | 7.617 |
+| 4 | `nvjet_sm90_tst_128x8_64x12_4x1_v_bz_splitK_TNT` | 64 | 3.949 |
+| 5 | `nvjet_sm90_tst_256x128_64x4_1x2_h_bz_coopA_TNT` | 48 | 3.550 |
 
 ### Qwen3.5-27B / eager / case2 (P1024/D0)
 
 | # | Kernel | 次数 | GPU 时间 (ms) |
 |---|---|---|---|
-| 1 | `nvjet_sm90_tst_320x128_64x3_1x2_h_bz_coopB_TNT` | 192 | 57.978 |
-| 2 | `nvjet_sm90_tst_256x128_64x4_1x2_h_bz_coopA_TNT` | 48 | 12.069 |
-| 3 | `nvjet_sm90_tst_384x8_64x4_4x1_v_bz_TNT` | 64 | 7.812 |
-| 4 | `nvjet_sm90_tst_128x8_64x12_4x1_v_bz_splitK_TNT` | 64 | 4.032 |
-| 5 | `elementwise_kernel` | 368 | 3.551 |
+| 1 | `nvjet_sm90_tst_320x128_64x3_1x2_h_bz_coopB_TNT` | 190 | 58.968 |
+| 2 | `nvjet_sm90_tst_256x128_64x4_1x2_h_bz_coopA_TNT` | 47 | 12.184 |
+| 3 | `nvjet_sm90_tst_384x8_64x4_4x1_v_bz_TNT` | 64 | 7.914 |
+| 4 | `nvjet_sm90_tst_128x8_64x12_4x1_v_bz_splitK_TNT` | 64 | 4.056 |
+| 5 | `nvjet_sm90_tst_176x128_64x5_1x2_h_bz_TNN` | 16 | 3.621 |
 
 ### Qwen3.5-27B / eager / case3 (P8192/D0)
 
 | # | Kernel | 次数 | GPU 时间 (ms) |
 |---|---|---|---|
-| 1 | `nvjet_sm90_tst_320x128_64x3_1x2_h_bz_coopB_TNT` | 208 | 487.751 |
-| 2 | `nvjet_sm90_tst_192x192_64x4_1x2_h_bz_coopB_TNN` | 48 | 99.450 |
-| 3 | `BatchPrefillWithPagedKVCacheKernel` | 32 | 62.594 |
-| 4 | `elementwise_kernel` | 368 | 24.368 |
-| 5 | `act_and_mul_kernel` | 128 | 17.647 |
+| 1 | `nvjet_sm90_tst_320x128_64x3_1x2_h_bz_coopB_TNT` | 208 | 503.516 |
+| 2 | `nvjet_sm90_tst_192x192_64x4_1x2_h_bz_coopB_TNN` | 48 | 102.237 |
+| 3 | `BatchPrefillWithPagedKVCacheKernel` | 32 | 65.231 |
+| 4 | `elementwise_kernel` | 368 | 25.059 |
+| 5 | `act_and_mul_kernel` | 128 | 17.770 |
 
 ### Qwen3.5-27B / eager / case5 (P16/D128)
 
 | # | Kernel | 次数 | GPU 时间 (ms) |
 |---|---|---|---|
-| 1 | `nvjet_sm90_tst_384x8_64x4_4x1_v_bz_TNT` | 8192 | 993.292 |
-| 2 | `nvjet_sm90_tst_128x8_64x12_4x1_v_bz_splitK_TNT` | 8192 | 508.086 |
-| 3 | `nvjet_sm90_tst_128x8_64x12_2x1_v_bz_TNT` | 6144 | 346.913 |
-| 4 | `nvjet_sm90_tst_64x8_64x16_4x1_v_bz_TNT` | 8192 | 201.897 |
-| 5 | `nvjet_sm90_tst_512x8_64x3_2x1_v_bz_TNT` | 129 | 108.375 |
+| 1 | `nvjet_sm90_tst_384x8_64x4_4x1_v_bz_TNT` | 8192 | 1005.430 |
+| 2 | `nvjet_sm90_tst_128x8_64x12_4x1_v_bz_splitK_TNT` | 8192 | 508.077 |
+| 3 | `nvjet_sm90_tst_128x8_64x12_2x1_v_bz_TNT` | 6144 | 347.143 |
+| 4 | `nvjet_sm90_tst_64x8_64x16_4x1_v_bz_TNT` | 8192 | 202.086 |
+| 5 | `nvjet_sm90_tst_512x8_64x3_2x1_v_bz_TNT` | 129 | 108.300 |
 
 ### Qwen3.5-27B / eager / case6 (P16/D512)
 
