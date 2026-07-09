@@ -4,7 +4,7 @@ All paths are RELATIVE to the project root (the `profiling/` directory). Every
 script is expected to be invoked with the project root as the current working
 directory (run_all.sh guarantees this).
 
-Experiment 2 scope: Qwen3 series only, SGLang, eager + cudagraph, FlashInfer.
+Experiment 2 scope: Qwen3 + selected Qwen3.5 models, SGLang, eager + cudagraph, FlashInfer.
 Workloads:
   * BS=1 pure prefill  : prompt in {16, 256, 1k, 4k, 8k}, decode 0
   * BS=1 pure decode   : prompt 16, decode in {128, 512}
@@ -13,15 +13,20 @@ Workloads:
 
 from __future__ import annotations
 
-# Target models (Qwen3 series). Alias -> local model directory (relative to
-# project root); fetched by envs/download_models.py.
-# Dense: 0.6B/1.7B/8B/14B. MoE: Qwen3-30B-A3B (30B total / 3B active).
+# Target models. Alias -> local model directory (relative to project root);
+# fetched by envs/download_models.py.
+# Qwen3 dense: 0.6B/1.7B/8B/14B. MoE: Qwen3-30B-A3B (30B total / 3B active).
+# Qwen3.5 supplement: dense 0.8B/2B/9B/27B.
 MODELS = {
     "Qwen3-0.6B": "models/Qwen3-0.6B",
     "Qwen3-1.7B": "models/Qwen3-1.7B",
     "Qwen3-8B": "models/Qwen3-8B",
     "Qwen3-14B": "models/Qwen3-14B",
     "Qwen3-30B-A3B": "models/Qwen3-30B-A3B",
+    "Qwen3.5-0.8B": "models/Qwen3.5-0.8B",
+    "Qwen3.5-2B": "models/Qwen3.5-2B",
+    "Qwen3.5-9B": "models/Qwen3.5-9B",
+    "Qwen3.5-27B": "models/Qwen3.5-27B",
 }
 
 # Execution modes. "eager" disables CUDA graphs; "cudagraph" keeps them on.

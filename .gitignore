@@ -1,20 +1,25 @@
 # Downloaded model weights (large; fetched via envs/download_models.py)
 models/
 
-# Transient raw nsys artifacts (compressed copies under results/nsys/ are kept).
+# Nsight Systems traces and logs are large and should not go through GitHub.
 kernel_launch/**/results/_work/
+kernel_launch/**/results/nsys/
+kernel_launch/**/logs/
 *.nsys-rep
+*.nsys-rep.gz
 *.sqlite
+*.sqlite.gz
+*.qdrep
 
 # Python / OS
 __pycache__/
 *.pyc
 .DS_Store
 
-# NOTE: compressed nsys results (results/nsys/**/*.gz), metrics, and logs ARE
-# tracked and pushed to GitHub -- the instance is ephemeral, so GitHub is the
-# durable store for the profiling outputs.
+# Metrics JSON/CSV are intentionally not ignored; they are small enough to keep
+# in GitHub as the durable profiling summaries.
 
-# rsync partial/temp files
-kernel_launch/**/results/nsys/**/.*.gz.*
-kernel_launch/**/results/nsys/**/.rsync-partial/
+# Local scratch reports/plots.
+kernel_launch/figs/
+kernel_launch/report.md
+old_qwen3_5/

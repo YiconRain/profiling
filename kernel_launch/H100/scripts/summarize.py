@@ -57,7 +57,7 @@ def get(rows, model, mode, case_id):
 def write_readme(rows: list[dict], out: Path) -> None:
     L: list[str] = []
     L.append("# H100 Kernel Launch 实验结果（Experiment 2）\n")
-    L.append("由 `scripts/summarize.py` 自动生成。SGLang（FlashInfer 后端）在 Qwen3 系列上，"
+    L.append("由 `scripts/summarize.py` 自动生成。SGLang（FlashInfer 后端）在 Qwen3 / Qwen3.5 模型上，"
              "eager vs cudagraph 的 kernel launch 与 GPU 空闲(bubble)分析。\n")
     L.append("## 指标说明\n")
     L.append("> 采集：`cudaProfilerStart/Stop` + nsys `--capture-range=cudaProfilerApi`（只录被测那一次 "

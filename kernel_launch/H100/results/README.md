@@ -7,8 +7,8 @@
 
 ```
 results/
-├── nsys/       # 每个 case 的 <模型>/<模式>/<用例>.nsys-rep.gz 与 .sqlite.gz(均保留)
-├── metrics/    # 每个组合的指标 JSON + summary.csv
+├── nsys/       # 每个 case 的 <模型>/<模式>/<用例>.nsys-rep.gz 与 .sqlite.gz(本地保留，不提交)
+├── metrics/    # 每个组合的指标 JSON + summary.csv(可提交)
 └── README.md   # 运行后生成的中文汇总
 ```
 
@@ -20,5 +20,5 @@ results/
 
 ## 产物用途
 
-- `nsys/*.nsys-rep.gz`:`gunzip` 后用 Nsight Systems GUI 可视化;`*.sqlite.gz` 供 SQL 自定义查询。
-- `metrics/summary.csv`:所有组合关键指标,便于二次绘图。
+- `nsys/*.nsys-rep.gz`:`gunzip` 后用 Nsight Systems GUI 可视化;`*.sqlite.gz` 供 SQL 自定义查询。本目录被 `.gitignore` 排除。
+- `metrics/*.json` 与 `metrics/summary.csv`:所有组合关键指标,便于二次绘图,可提交到 GitHub。

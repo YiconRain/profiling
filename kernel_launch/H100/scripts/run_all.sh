@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # End-to-end driver for the H100 kernel-launch experiments.
 #
-# Steps: download Qwen3 models -> profile every (model, mode, case) cell
+# Steps: download requested models -> profile every (model, mode, case) cell
 # under nsys -> aggregate metrics. Safe to re-run: completed cells are skipped.
 #
 # Requirements on the instance:
@@ -25,8 +25,41 @@ echo "[run_all] project root : $ROOT"
 echo "[run_all] python        : $PY"
 echo "[run_all] nsys          : $(command -v nsys || echo 'NOT FOUND')"
 
-# 1. Models: the Qwen3 series (dense 0.6B/1.7B/8B/14B + MoE Qwen3-30B-A3B).
-"$PY" envs/download_models.py --series qwen3
+extract_requested_models() {
+  local collect=0
+  local arg
+  for arg in "$@"; do
+    if [[ "$arg" == "--models" ]]; then
+      collect=1
+      continue
+    fi
+    if [[ "$arg" == --models=* ]]; then
+      printf '%s\n' "${arg#--models=}"
+      collect=0
+      continue
+    fi
+    if [[ "$arg" == --* ]]; then
+      collect=0
+      continue
+    fi
+    if [[ "$collect" == 1 ]]; then
+      printf '%s\n' "$arg"
+    fi
+  done
+}
+
+REQUESTED_MODELS=()
+while IFS= read -r model; do
+  REQUESTED_MODELS+=("$model")
+done < <(extract_requested_models "$@")
+
+# 1. Models. If --models is present, download only those aliases; otherwise
+# download the full configured experiment set (Qwen3 + selected Qwen3.5).
+if (( ${#REQUESTED_MODELS[@]} )); then
+  "$PY" envs/download_models.py --models "${REQUESTED_MODELS[@]}"
+else
+  "$PY" envs/download_models.py --series all
+fi
 
 # 2. Profiling sweep (extra args act as filters).
 "$PY" kernel_launch/H100/scripts/run_profiling.py --python "$PY" "$@"
