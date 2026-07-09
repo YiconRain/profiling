@@ -78,7 +78,8 @@ def main() -> int:
         log_level="warning",
     )
 
-    # decode_len == 0 -> prefill-only, still emit the single unavoidable token.
+    # Historical "d0" cases are prefill-dominant, not pure prefill: generate()
+    # still emits one token, so the measured path is prefill + one decode step.
     max_new_tokens = max(args.decode_len, 1)
     sampling_params = {"temperature": 0.0, "max_new_tokens": max_new_tokens, "ignore_eos": True}
 

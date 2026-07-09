@@ -20,7 +20,9 @@ import config as C  # noqa: E402
 
 CSV_FIELDS = [
     "model", "mode", "case", "batch_size", "prompt_len", "decode_len",
-    "e2e_ms", "gpu_busy_ms", "gpu_bubble_ratio",
+    "e2e_ms", "gpu_busy_ms", "gpu_bubble_ms", "gpu_bubble_ratio",
+    "unhidden_launch_api_ms", "unhidden_launch_api_pct",
+    "other_host_idle_ms", "other_host_idle_pct",
     "total_kernels", "total_kernel_gpu_ms",
     "launch_count", "launch_overhead_ms", "launch_overhead_pct",
 ]
@@ -46,7 +48,9 @@ def case_label(case_id: str) -> str:
     c = next((c for c in C.CASES if c["id"] == case_id), None)
     if not c:
         return case_id
-    return f"{case_id} (BS{c['batch_size']}/P{c['prompt_len']}/D{c['decode_len']})"
+    effective_decode = max(c["decode_len"], 1)
+    suffix = " effective" if c["decode_len"] == 0 else ""
+    return f"{case_id} (BS{c['batch_size']}/P{c['prompt_len']}/D{effective_decode}{suffix})"
 
 
 def get(rows, model, mode, case_id):
@@ -65,15 +69,19 @@ def write_readme(rows: list[dict], out: Path) -> None:
     L.append("- **e2e_ms**：被测 generate 的端到端时间（采集区间内主机 API 的时间跨度）。\n"
              "- **gpu_busy_ms**：所有 GPU 活动区间(kernel+memcpy+memset)取**并集**的忙碌时间（≤e2e，避免并发重复计）。\n"
              "- **bubble%** = `(e2e − gpu_busy) / e2e`：GPU 空闲占比（launch + host 框架 + sync 造成的气泡）。**核心指标**。\n"
+             "- **unhidden_launch_api_ms**：GPU idle 区间中，CPU 正在执行 launch API 的墙钟时间；表示未被 GPU work overlap 的 launch API 时间。\n"
+             "- **other_host_idle_ms** = `gpu_bubble_ms − unhidden_launch_api_ms`：GPU idle 但 CPU 不在 launch API 中的时间，通常来自 scheduler/sampling/sync/框架逻辑。\n"
              "- **total_kernels / launch_count**：kernel 执行数 / launch 类 API 调用数（`cudaLaunchKernel*`+`cudaGraphLaunch*`+`cuLaunchKernel*`）。\n"
              "- **launch_overhead_pct**：仅作诊断——compute-bound 时被 overlap/反压高估、launch-bound 时低估,勿当真实影响。\n")
+    L.append("> `bs1_p*_d0` 是历史 case id；实际 `worker.py` 会执行 `max_new_tokens=max(decode_len, 1)`，"
+             "所以这些行是 **prefill + 1 个 decode token**，表格中标为 `D1 effective`。\n")
 
     # Per-model tables.
     models = [m for m in C.MODELS if any(r["model"] == m for r in rows)]
     for model in models:
         L.append(f"\n## {model}\n")
-        L.append("| Case | Mode | e2e (ms) | gpu_busy (ms) | bubble% | Kernels | Launches | launch% |")
-        L.append("|---|---|---|---|---|---|---|---|")
+        L.append("| Case | Mode | e2e (ms) | gpu_busy (ms) | bubble (ms/%) | unhidden launch (ms) | other host idle (ms) | Kernels | Launches | launch% |")
+        L.append("|---|---|---|---|---|---|---|---|---|---|")
         for case in C.CASES:
             for mode in C.MODES:
                 r = get(rows, model, mode, case["id"])
@@ -81,7 +89,10 @@ def write_readme(rows: list[dict], out: Path) -> None:
                     continue
                 L.append(
                     f"| {case_label(case['id'])} | {mode} | {r['e2e_ms']:.2f} | "
-                    f"{r.get('gpu_busy_ms', 0):.2f} | {r.get('gpu_bubble_ratio', 0)*100:.1f} | "
+                    f"{r.get('gpu_busy_ms', 0):.2f} | "
+                    f"{r.get('gpu_bubble_ms', 0):.2f} / {r.get('gpu_bubble_ratio', 0)*100:.1f} | "
+                    f"{r.get('unhidden_launch_api_ms', 0):.2f} | "
+                    f"{r.get('other_host_idle_ms', 0):.2f} | "
                     f"{r['total_kernels']} | {r['launch_count']} | {r['launch_overhead_pct']:.1f} |"
                 )
 

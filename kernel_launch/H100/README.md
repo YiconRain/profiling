@@ -26,22 +26,26 @@
 | 执行模式 | eager（关闭 CUDA Graph）、cudagraph（开启 CUDA Graph） |
 | Batch Size | 1（prefill+decode）；4 / 8 / 16（仅 decode，做 batch 扫描） |
 
-### 测试用例（13 个 = BS×prompt×decode 组合）
+### 测试用例（14 个 = BS×prompt×decode 组合）
 
-| 用例 id | BS | Prompt | Decode | 说明 |
+| 用例 id | BS | Prompt | Effective Decode | 说明 |
 |------|----|--------|--------|------|
-| bs1_p16_d0 / p256 / p1k / p4k / p8k | 1 | 16/256/1k/4k/8k | 0 | 纯 prefill（不同上下文长度） |
+| bs1_p16_d0 / p256 / p1k / p4k / p8k | 1 | 16/256/1k/4k/8k | 1 | prefill-dominant（历史 case id 保留 d0） |
 | bs1_p16_d128 / d512 | 1 | 16 | 128/512 | 纯 decode |
+| bs1_p8k_d512 | 1 | 8k | 512 | 长上下文 decode |
 | bs4_p16_d128 / d512 | 4 | 16 | 128/512 | decode，batch 扫描 |
 | bs8_p16_d128 / d512 | 8 | 16 | 128/512 | decode，batch 扫描 |
 | bs16_p16_d128 / d512 | 16 | 16 | 128/512 | decode，batch 扫描 |
 
-> **关于 "Decode 0"**：解码器至少产出 1 个 token，因此 prefill-only 用例强制
-> `max_new_tokens=1`，该 token 与 prefill 同属一次前向，trace 捕获到的即 prefill 阶段的 kernel。
+> **关于 `d0` case id**：`bs1_p*_d0` 是历史命名，实际 `worker.py` 会设置
+> `max_new_tokens=max(decode_len, 1)`，因此这些用例实际执行 **prefill + 1 个 decode token**。
+> 它们应理解为 prefill-dominant，而不是完全不 decode 的 pure prefill。小 prompt 下开启
+> CUDA Graph 仍有收益，主要是因为这 1 个 decode token、采样/调度与固定 shape 的 graph-eligible
+> 路径在总耗时中占比更高；prompt 变长后，prefill 主体计算占主导，这部分收益被摊薄。
 > **BS>1**：把同一 prompt 复制 N 份组成 batch，N 条序列 lockstep 解码 —— 用于观察 launch 影响
 > **随 batch 增大而衰减**的趋势(batch 越大,kernel 越大、GPU 越饱和,launch 越藏得住)。
 
-完整配置共 `9 模型 × 2 模式 × 13 用例 = 234` 个实验组合。MoE 选 Qwen3-30B-A3B(约 60GB,单卡
+完整配置共 `9 模型 × 2 模式 × 14 用例 = 252` 个实验组合。MoE 选 Qwen3-30B-A3B(约 60GB,单卡
 80GB 留约 20GB 余量;更大的 MoE 放不下)。补充实验可用 `--models` / `--cases` 只跑少量组合。
 
 ## 3. 方法论
@@ -77,6 +81,8 @@ generate**(模型加载、warmup 都在 Start 之前，不入库)。关键点:
 | 端到端时间 e2e | 采集区间(被测 generate)的墙钟跨度:主机 API 事件的 `max(end) − min(start)` |
 | **gpu_busy** | 所有 GPU 活动区间(kernel+memcpy+memset)取**并集**的忙碌时间(≤e2e,并发安全) |
 | **gpu_bubble_ratio**(核心) | `(e2e − gpu_busy) / e2e` = GPU 空闲占比(launch+host+sync 造成的气泡) |
+| **unhidden_launch_api_ms** | launch API 区间与 GPU idle 区间的交集时长,表示没有被 GPU work overlap 的 launch API 墙钟时间 |
+| **other_host_idle_ms** | `gpu_bubble_ms − unhidden_launch_api_ms`,表示 GPU idle 但 CPU 不在 launch API 中的 host/scheduler/sync 时间 |
 | kernel 总数 | 库内 `CUPTI_ACTIVITY_KIND_KERNEL` 记录数(含 CUDA graph 内节点) |
 | launch 次数 | kernel 启动类主机 API 调用数：`cudaLaunchKernel*` / `cudaGraphLaunch*` / `cuLaunchKernel*`（`CUPTI_ACTIVITY_KIND_RUNTIME`），另在 `launch_by_api` 中给出分项 |
 | launch 开销 / 占比 | 上述 launch API 累计主机耗时,及其 / e2e(**仅诊断**,见下方口径坑) |

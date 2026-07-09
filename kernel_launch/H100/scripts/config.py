@@ -6,8 +6,9 @@ directory (run_all.sh guarantees this).
 
 Experiment 2 scope: Qwen3 + selected Qwen3.5 models, SGLang, eager + cudagraph, FlashInfer.
 Workloads:
-  * BS=1 pure prefill  : prompt in {16, 256, 1k, 4k, 8k}, decode 0
+  * BS=1 prefill-dominant: prompt in {16, 256, 1k, 4k, 8k}, effective decode 1
   * BS=1 pure decode   : prompt 16, decode in {128, 512}
+  * BS=1 long-context decode: prompt 8k, decode 512
   * BS in {4,8,16}     : pure decode, prompt 16, decode in {128, 512}
 """
 
@@ -36,10 +37,11 @@ MODES = ["eager", "cudagraph"]
 ATTENTION_BACKEND = "flashinfer"
 
 # Test cases. Each fixes (batch_size, prompt_len, decode_len).
-# decode_len == 0 means prefill-only: the worker still emits exactly one token
-# (the minimum a decoder produces), so the trace captures the prefill kernels.
+# Historical d0 case ids keep decode_len=0 for filenames/filters, but worker.py
+# sets max_new_tokens=max(decode_len, 1). These cases therefore execute prefill
+# plus one generated token; treat them as prefill-dominant, not pure prefill.
 CASES = [
-    # BS=1, pure prefill (decode 0)
+    # BS=1, prefill-dominant (effective decode 1; case id remains d0)
     {"id": "bs1_p16_d0", "batch_size": 1, "prompt_len": 16, "decode_len": 0},
     {"id": "bs1_p256_d0", "batch_size": 1, "prompt_len": 256, "decode_len": 0},
     {"id": "bs1_p1k_d0", "batch_size": 1, "prompt_len": 1024, "decode_len": 0},
@@ -48,6 +50,8 @@ CASES = [
     # BS=1, pure decode (prompt 16)
     {"id": "bs1_p16_d128", "batch_size": 1, "prompt_len": 16, "decode_len": 128},
     {"id": "bs1_p16_d512", "batch_size": 1, "prompt_len": 16, "decode_len": 512},
+    # BS=1, long-context decode (prompt 8k)
+    {"id": "bs1_p8k_d512", "batch_size": 1, "prompt_len": 8192, "decode_len": 512},
     # BS=4/8/16, pure decode (prompt 16) -- batch-size sweep
     {"id": "bs4_p16_d128", "batch_size": 4, "prompt_len": 16, "decode_len": 128},
     {"id": "bs4_p16_d512", "batch_size": 4, "prompt_len": 16, "decode_len": 512},

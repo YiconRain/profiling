@@ -9,11 +9,15 @@ Metrics:
   * total_kernel_gpu_ns  - SUMMED GPU time of kernels (double counts overlap)
   * gpu_busy_ns          - UNION of GPU activity intervals (kernels+memcpy+memset);
                            the real "GPU busy" time (<= e2e), overlap-safe
+  * gpu_bubble_ns        - e2e_ns - gpu_busy_ns
   * gpu_bubble_ratio     - (e2e_ns - gpu_busy_ns) / e2e_ns; fraction of e2e the
                            GPU sat idle (launch + host + sync bubbles)
   * launch_count         - number of kernel-launch host API calls
   * launch_overhead_ns   - summed host time spent in those launch calls
   * launch_overhead_pct  - launch_overhead_ns / e2e_ns * 100 (diagnostic only)
+  * unhidden_launch_api_ns - wall-time union of launch API intervals that overlap
+                             GPU idle intervals; CPU launch time not hidden by GPU work
+  * other_host_idle_ns   - remaining GPU idle wall time not covered by launch APIs
   * e2e_ns               - span of the captured region (host API first..last)
   * top5                 - five kernels with the largest summed GPU time
 
@@ -30,6 +34,7 @@ from __future__ import annotations
 import argparse
 import json
 import sqlite3
+from collections.abc import Iterable
 
 # Host APIs that launch GPU kernels. cudaLaunchKernel* dominates eager mode;
 # cudaGraphLaunch* replaces most of them in cudagraph mode (one call replays
@@ -80,7 +85,42 @@ def launch_stats(con: sqlite3.Connection):
     return count, dur, by_api
 
 
-def gpu_busy_ns(con: sqlite3.Connection) -> int:
+def merge_intervals(intervals: Iterable[tuple[int, int]]) -> list[tuple[int, int]]:
+    clean = sorted((int(b), int(e)) for b, e in intervals if b is not None and e is not None and e > b)
+    if not clean:
+        return []
+    merged = []
+    cs, ce = clean[0]
+    for b, e in clean[1:]:
+        if b <= ce:
+            ce = max(ce, e)
+        else:
+            merged.append((cs, ce))
+            cs, ce = b, e
+    merged.append((cs, ce))
+    return merged
+
+
+def interval_duration_ns(intervals: Iterable[tuple[int, int]]) -> int:
+    return int(sum(e - b for b, e in intervals))
+
+
+def intersect_duration_ns(a: list[tuple[int, int]], b: list[tuple[int, int]]) -> int:
+    """Wall-time duration covered by both sorted, non-overlapping interval lists."""
+    i = j = 0
+    total = 0
+    while i < len(a) and j < len(b):
+        ab, ae = a[i]
+        bb, be = b[j]
+        total += max(0, min(ae, be) - max(ab, bb))
+        if ae <= be:
+            i += 1
+        else:
+            j += 1
+    return int(total)
+
+
+def gpu_activity_intervals(con: sqlite3.Connection) -> list[tuple[int, int]]:
     """Union (merged) coverage of all GPU activity intervals.
 
     Sums kernel + memcpy + memset execution windows with overlaps merged, so it
@@ -93,24 +133,15 @@ def gpu_busy_ns(con: sqlite3.Connection) -> int:
                   "CUPTI_ACTIVITY_KIND_MEMSET"):
         if table_exists(con, table):
             intervals += con.execute(f"SELECT start, end FROM {table}").fetchall()
-    intervals = [(b, e) for b, e in intervals if b is not None and e is not None]
-    if not intervals:
-        return 0
-    intervals.sort()
-    busy = 0
-    cs, ce = intervals[0]
-    for b, e in intervals[1:]:
-        if b <= ce:
-            ce = max(ce, e)
-        else:
-            busy += ce - cs
-            cs, ce = b, e
-    busy += ce - cs
-    return int(busy)
+    return merge_intervals(intervals)
 
 
-def e2e_span_ns(con: sqlite3.Connection) -> int:
-    """Wall span of the captured region: earliest..latest host API call.
+def gpu_busy_ns(con: sqlite3.Connection) -> int:
+    return interval_duration_ns(gpu_activity_intervals(con))
+
+
+def e2e_bounds_ns(con: sqlite3.Connection) -> tuple[int, int]:
+    """Wall bounds of the captured region: earliest..latest host API call.
 
     RUNTIME events bracket the CPU side of the measured generate(); their span
     approximates its end-to-end wall time. Fall back to kernel span if needed.
@@ -120,8 +151,47 @@ def e2e_span_ns(con: sqlite3.Connection) -> int:
             continue
         row = con.execute(f"SELECT MIN(start), MAX(end) FROM {table}").fetchone()
         if row and row[0] is not None:
-            return int(row[1] - row[0])
-    return 0
+            return int(row[0]), int(row[1])
+    return 0, 0
+
+def e2e_span_ns(con: sqlite3.Connection) -> int:
+    start, end = e2e_bounds_ns(con)
+    return int(end - start)
+
+
+def complement_intervals(bounds: tuple[int, int], busy: list[tuple[int, int]]) -> list[tuple[int, int]]:
+    start, end = bounds
+    if end <= start:
+        return []
+    idle = []
+    cursor = start
+    for b, e in busy:
+        if e <= start or b >= end:
+            continue
+        b = max(b, start)
+        e = min(e, end)
+        if b > cursor:
+            idle.append((cursor, b))
+        cursor = max(cursor, e)
+    if cursor < end:
+        idle.append((cursor, end))
+    return idle
+
+
+def launch_api_intervals(con: sqlite3.Connection) -> list[tuple[int, int]]:
+    if not table_exists(con, "CUPTI_ACTIVITY_KIND_RUNTIME"):
+        return []
+    like = " OR ".join(["s.value LIKE ?"] * len(LAUNCH_API_PATTERNS))
+    rows = con.execute(
+        f"""
+        SELECT r.start, r.end
+        FROM CUPTI_ACTIVITY_KIND_RUNTIME r
+        JOIN StringIds s ON s.id = r.nameId
+        WHERE ({like})
+        """,
+        LAUNCH_API_PATTERNS,
+    ).fetchall()
+    return merge_intervals(rows)
 
 
 def main() -> int:
@@ -139,8 +209,14 @@ def main() -> int:
     con = sqlite3.connect(args.db)
     if not table_exists(con, "CUPTI_ACTIVITY_KIND_KERNEL"):
         raise SystemExit("No CUPTI_ACTIVITY_KIND_KERNEL table: capture produced no kernels.")
-    e2e_ns = e2e_span_ns(con)
-    busy_ns = gpu_busy_ns(con)
+    e2e_bounds = e2e_bounds_ns(con)
+    e2e_ns = int(e2e_bounds[1] - e2e_bounds[0])
+    busy_intervals = gpu_activity_intervals(con)
+    busy_ns = interval_duration_ns(busy_intervals)
+    bubble_ns = max(0, e2e_ns - busy_ns)
+    idle_intervals = complement_intervals(e2e_bounds, busy_intervals)
+    unhidden_launch_ns = intersect_duration_ns(launch_api_intervals(con), idle_intervals)
+    other_host_idle_ns = max(0, bubble_ns - unhidden_launch_ns)
     total_kernels, total_gpu_ns, top5 = kernel_stats(con)
     launch_count, launch_ns, launch_by_api = launch_stats(con)
     con.close()
@@ -156,7 +232,15 @@ def main() -> int:
         "e2e_ms": e2e_ns / 1e6,
         "gpu_busy_ns": busy_ns,
         "gpu_busy_ms": busy_ns / 1e6,
-        "gpu_bubble_ratio": (e2e_ns - busy_ns) / e2e_ns if e2e_ns else 0.0,
+        "gpu_bubble_ns": bubble_ns,
+        "gpu_bubble_ms": bubble_ns / 1e6,
+        "gpu_bubble_ratio": bubble_ns / e2e_ns if e2e_ns else 0.0,
+        "unhidden_launch_api_ns": unhidden_launch_ns,
+        "unhidden_launch_api_ms": unhidden_launch_ns / 1e6,
+        "unhidden_launch_api_pct": (unhidden_launch_ns / e2e_ns * 100) if e2e_ns else 0.0,
+        "other_host_idle_ns": other_host_idle_ns,
+        "other_host_idle_ms": other_host_idle_ns / 1e6,
+        "other_host_idle_pct": (other_host_idle_ns / e2e_ns * 100) if e2e_ns else 0.0,
         "total_kernels": total_kernels,
         "total_kernel_gpu_ns": total_gpu_ns,
         "total_kernel_gpu_ms": total_gpu_ns / 1e6,
@@ -171,7 +255,8 @@ def main() -> int:
     with open(args.out, "w") as f:
         json.dump(metrics, f, indent=2)
     print(f"[analyze] {args.out}: {total_kernels} kernels, launch_count {launch_count}, "
-          f"gpu_bubble {metrics['gpu_bubble_ratio']*100:.1f}%")
+          f"gpu_bubble {metrics['gpu_bubble_ratio']*100:.1f}%, "
+          f"unhidden_launch {metrics['unhidden_launch_api_ms']:.3f} ms")
     return 0
 
 
