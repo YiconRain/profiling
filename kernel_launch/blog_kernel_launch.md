@@ -23,7 +23,6 @@
 
 
 
-
 **Observation，Kernel Launch 和 GPU Execution 是异步的，形成异步的 producer/consumer 关系。**
 
 CPU 把 kernel 解析成一系列命令写进 `Command Buffer`（位于 CPU 侧 pinned buffer）即返回，GPU 异步地去 `Command Buffer` 取单个 kernel 对应的所有命令在 GPU 侧执行。这样的性质形成经典的 producer/consumer 的关系，producer 即 CPU，consumer 即 GPU。Producer 生产的速率即 Kernel Launch Overhead + CPU-GPU synchronization Overhead；Consumer 消费的速率即 GPU Execution Time。
@@ -31,8 +30,10 @@ CPU 把 kernel 解析成一系列命令写进 `Command Buffer`（位于 CPU 侧 
 Producer/Consumer 关系：
 1. Producer 生产速率 < Consumer 消费速率，`Command Buffer` 中 kernel 不足，使 GPU  utilization 不足，存在大量 bubble。此时，CPU Launch Overhead -> Other Overhead -> GPU Execution Time -> Synchronization Overhead，这四段是串行的。参考下图（qwen3.5-27B 在 eager mode 下 decode）中`nvjet_sm90_tst_64x8_64x16_4x1_v_bz_TNT`的 lifeline。
 	![decode lifeline](../assets/figs/decode_lifeline.png)
-2. Producer 生产速率 > Consumer 消费速率，`Command Buffer` 充满 kernel，这带来 overlap 的机会，可以掩盖 Kernel Launch Overhead。参考下图（qwen3.5-27B 在 eager mode 下做 `prompt=8k`下的 prefill），做一些比较大的 GEMM 操作时，很容易将 GPU 计算资源吃满且运行时间较长，此时就会出现`Command Buffer Full` 的现象，Kernel A 在 launch 和 execute 之间甚至可能存在秒级的 latency。此时，大量的 kernel launch overhead 都被实际的 GPU execution 掩盖了。所以，所谓计算量更大的情况下 kernel launch overhead 不明显，本质上是因为 kernel launch 被 overlap 掩盖了，而不是单纯的 kernel launch 时间短。
+
+2. Producer 生产速率 > Consumer 消费速率，`Command Buffer` 充满 kernel，这带来 overlap 的机会，可以掩盖 Kernel Launch Overhead。参考下图（qwen3.5-27B 在 eager mode 下做 `prompt=8k`下的 prefill），做一些比较大的 GEMM 操作时，很容易将 GPU 计算资源吃满且运行时间较长，此时就会出现`Command Buffer Full` 的现象，Kernel A 在 launch 和 execute 之间甚至可能存在秒级的 latency。此时，大量的 kernel launch overhead 都被实际的 GPU execution 掩盖了。所以，所谓计算量更大的情况下 kernel launch overhead 不明显，本质上是因为 kernel launch 被 overlap 掩盖了，而不是单纯的 kernel launch 时间短。（当然不一定需要 `Command Buffer full`，只要 kernel 足够长就能带来 overlap 的机会）
 	![prefill command buffer full](../assets/figs/prefill_command_buffer_full.png)
+
 
 
 
@@ -83,10 +84,12 @@ gpu_bubble_ms
 我们在 BS=1、prompt=16 下，在 decode=512 的 eager 和 cudagraph 模式下，测算 GPU bubble ratio 如下图所示：
 
 ![decode bubble](../assets/figs/fig1_decode_bs1_bubble.png)
+<center> BS=1、prompt=16、decode=512 的 GPU Bubble Ratio</center>
 
 我们在 BS=1、prompt=16 下，做 decode=128 / decode=512 的测试，测算 eager -> cudagraph e2e speedup，结果如下图：
 
 ![decode speedup](../assets/figs/fig2_decode_bs1_speedup.png)
+<center> BS=1、prompt=16 下 Decode 的 Eager 到 Cudagraph E2E Speedup</center>
 
 我们对 BS = 1、decode = 512 的测试，进行详细数据的展开如下：
 
@@ -116,8 +119,10 @@ gpu_bubble_ms
 
 下面的统计使用 `bs1_p8k_d512`，即 BS=1、prompt=8k 后继续 decode512，我们统计 decode 段数据。
 ![long-context decode bubble](../assets/figs/fig6_decode_long_context_bubble.png)
+<center> 8k 长上下文 Decode512 的 GPU Bubble Ratio</center>
 
 ![short vs long decode speedup](../assets/figs/fig7_decode_short_vs_long_speedup.png)
+<center> 短上下文与长上下文 Decode512 的 Eager 到 Cudagraph Speedup</center>
 
 | Model         | bubble eager -> cg | e2e speedup | TPOT eager -> cg | launch count/step eager -> cg | bubble ms/step eager -> cg | unhidden launch ms/step eager -> cg | other host idle ms/step eager -> cg |
 | ------------- | -----------------: | ----------: | ---------------: | ----------------------------: | -------------------------: | ----------------------------------: | ----------------------------------: |
@@ -136,8 +141,10 @@ gpu_bubble_ms
 
 对 Qwen3 系列来说，SGLang 的 prefill 默认走 piecewise CUDA Graph，而 Qwen3.5-27B fall back 没有做 piecewise CUDA Graph。
 ![prefill bubble](../assets/figs/fig3_prefill_bubble.png)
+<center> BS=1 Prefill 的 GPU Bubble Ratio</center>
 
 ![prefill e2e](../assets/figs/fig3_prefill_e2e.png)
+<center> BS=1 Prefill 的 E2E Latency</center>
 
 以 BS=1，prompt=8k，piecewise CUDA Graph Prefill 为例：
 
@@ -163,17 +170,19 @@ gpu_bubble_ms
 - 针对 prefill，`prompt_len=16` 的时候，MPK 确实小有优势，这部分优势很可能就来自于 MegaKernel 对 GPU Bubble 的消解；但可惜 MegaKernel 的 `mbt=16` 设计使得架构优势在 prefill 上迅速衰减，甚至在 `prompt_len=32` 的时候就开始比不过 vLLM/SGLang了。
 - 针对 decode，在我们的实测中，MPK 干不过 vLLM/SGLang CUDA Graph，这同样和我们观察到的 "`CUDA Graph` 已经能有效地降低 Kernel Launch 和 Host Overhead" 这一现象是相符的，
 ![MPK prefill TTFT](../assets/figs/mpk_prefill_ttft_all.png)
+<center> MPK/vLLM/SGLang 的 TTFT 性能</center>
 ![MPK TPOT](../assets/figs/mpk_tpot_all_models.png)
-<center> MPK/vLLM/SGLang 的 TTFT 和 TPOT 性能</center>
+<center> MPK/vLLM/SGLang 的 TPOT 性能</center>
 
 **Claim3，按照上面对 GPU bubble 的观察，单卡 H100 serve 实验模型在 `prompt=1k` 下依然保持 10% 的 bubble，在 `prompt=256` 下更是普遍有 25% 以上的 bubble。如果能利用 MegaKernel 架构消除这部分 bubble，同时将 MPK 对 prefill 的支持做好，同时像 ETC那样支持动态的 `input_shape`，看起来 MegaKernel 是可以做好的 prefill 的。**
 
 
 ## Batch sweep test
 
-图 4 给出 decode128 / decode512 的 batch sweep speedup。
+下图 给出 decode128 / decode512 的 batch sweep speedup。
 
 ![batch sweep](../assets/figs/fig4_decode_bs_sweep_speedup.png)
+<center> Decode Batch Sweep 的 Eager 到 Cudagraph Speedup</center>
 
 选取 BS=8、prompt=16, decode=512，每次decode 的详细指标表格如下：
 
