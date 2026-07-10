@@ -51,7 +51,7 @@ Producer/Consumer 关系：
 - launch_overhead_pct，launch API 累计耗时占 e2e 的比例：`launch_overhead_pct = launch_overhead_ms / e2e_ms * 100%`，这个指标只适合粗略估算，不适合直接解释性能瓶颈。原因是：compute-bound 场景里 launch API 可能因为队列反压被撑大而高估影响；launch-bound 小模型/decode 场景里 API 本身很短，但 kernel 之间 GPU 空转很大，反而低估影响，因此我们不推荐单纯观察这个指标。
 
 **下面一些指标对我们的 profiling 有更佳意义：**
-- `gpu_busy_ms`，GPU 真正处于忙碌状态的时间。测算方式是收集所有 GPU activity 区间：kernel、memcpy、memset 等操作，然后对这些时间区间取并集，合并重叠部分，不会因为多 stream 并发而重复计时，一定满足 `gpu_busy_ms <= e2e_ms`。我们手动测算 GPU bubble ratio，一方面是因为 GPU utilization 对并发 operation 会重复计数，即 GPU utilization 可能超过 100%，而我们主要想看 GPU 因 kernel launch + host sync 导致的空闲情况，因此我们针对并发 operation 取并集计时，不过经过 check 我们的 `gpu_bubble_ratio` 和 `GPU Utilization` 的差别其实很小，不影响判断和结论；另一方面，没用 SM Utilization 是因为 vastai 不暴露 GPU 硬件计数器，导致无法进行 SM Utilization 的测试。
+- `gpu_busy_ms`，GPU 真正处于忙碌状态的时间。测算方式是收集所有 GPU activity 区间：kernel、memcpy、memset 等操作，然后对这些时间区间取并集，合并重叠部分，不会因为多 stream 并发而重复计时，一定满足 `gpu_busy_ms <= e2e_ms`。我们手动测算 GPU bubble ratio，一方面是因为 GPU utilization 对并发 operation 会重复计数，即 GPU utilization 可能超过 100%，而我们主要想看 GPU 因 kernel launch + host sync 导致的空闲情况，因此我们针对并发 operation 取并集计时，不过经过 check 我们的 `gpu_bubble_ratio` 和 `GPU Utilization` 的差别其实很小，不影响判断和结论；另一方面，没用 SM Utilization 是因为 vastai 不暴露 GPU 硬件计数器，导致无法进行 SM Utilization 的测试，而且我们主要探究 system-level GPU 的使用情况，而非 kernel 的性能。
 - `gpu_bubble_ratio`，GPU 空闲比例。也就是 e2e 时间里 GPU 没有 activity 的部分，指示 GPU 有多少时间没有活干：`gpu_bubble_ratio = (e2e_ms - gpu_busy_ms) / e2e_ms`。反映 launch/host/scheduler/sync 导致的真实 GPU bubble。
 - `unhidden_launch_api_ms`，即无法和实际运行的 GPU kernel overlap 的 CPU Launch Overhead，这完全被暴露出来，从意义上更接近实际的 CPU Launch Overhead，可以用来衡量潜在的可以被 CUDA Graph 或 MegaKernel 解决的 Kernel Launch Overhead。
 - `other_host_idle_ms`：GPU 空转但 CPU 不在 launch API 中的时间，通常包括：cudaMemcpy D2H、sampling、scheduler、attention metadata planning、Python runtime 等，有 `other_host_idle_ms = gpu_bubble_ms - unhidden_launch_api_ms`。
@@ -158,7 +158,7 @@ gpu_bubble_ms
 | Qwen3.5-27B   | 733.65 |        1,683 |               0 |     11.48 |    1.6% |               0.98 |              10.49 |
 
 
-**Claim，decode 中 CUDA Graph 已经把 kernel launch 和 host overhead 压到很低，因此 MegaKernel 继续减少 kernel 数量的收益上限有限；prefill 则呈现明显的 prompt-dependent 行为。短 prompt 下，实际 GPU work 太少，prefill 中会形成很高的 GPU bubble；但随着 prompt 增长，GEMM/attention 计算变长，这部分固定开销被明显摊薄：Qwen3-8B/14B/Qwen3.5-27B 的 bubble ratio 已经降到 1%-3% 量级。因此 MegaKernel 的这一 motivation 主要在中小 prompt 下成立。**
+**Claim，decode 中 CUDA Graph 已经把 kernel launch 和 host overhead 压到很低，因此 MegaKernel 继续减少 kernel 数量的收益上限有限；prefill 则呈现明显的 prompt-dependent 行为。短 prompt 下，实际 GPU work 太少，prefill 中会形成很高的 GPU bubble；但随着 prompt 增长，GEMM/attention 计算变长，这部分固定开销被明显摊薄：Qwen3-8B/14B/Qwen3.5-27B 的 bubble ratio 已经降到 1%-3% 量级。因此 MegaKernel 的这一 motivation 对 prefill 主要在中小 prompt 下成立。**
 
 ### BS=1  summary
 
@@ -166,7 +166,7 @@ gpu_bubble_ms
 
 **Claim2，prefill 则呈现明显的 prompt-dependent 行为。短 prompt 下，实际 GPU work 太少，prefill 中会形成很高的 GPU bubble；但随着 prompt 增长，GEMM/attention 计算变长，这部分固定开销被明显摊薄：Qwen3-8B/14B/Qwen3.5-27B 的 bubble ratio 已经降到 1%-3% 量级。因此 MegaKernel 通过减少 Kernel 的数量来减少 Kernel Launch Overhead + Host Overhead 的 motivation 主要在中小 prompt 下成立。**
 
-联想到之前做的 MPK/vLLM/SGLang 的 TTFT 和 TPOT 性能试验，当时没能解释的 2。点，和我们今天观察到的其实是相符的：
+联想到之前做的 MPK/vLLM/SGLang 的 TTFT 和 TPOT 性能试验，当时没能解释的 2 点，和我们今天观察到的其实是相符的：
 - 针对 prefill，`prompt_len=16` 的时候，MPK 确实小有优势，这部分优势很可能就来自于 MegaKernel 对 GPU Bubble 的消解；但可惜 MegaKernel 的 `mbt=16` 设计使得架构优势在 prefill 上迅速衰减，甚至在 `prompt_len=32` 的时候就开始比不过 vLLM/SGLang了。
 - 针对 decode，在我们的实测中，MPK 干不过 vLLM/SGLang CUDA Graph，这同样和我们观察到的 "`CUDA Graph` 已经能有效地降低 Kernel Launch 和 Host Overhead" 这一现象是相符的，
 ![MPK prefill TTFT](../assets/figs/mpk_prefill_ttft_all.png)
