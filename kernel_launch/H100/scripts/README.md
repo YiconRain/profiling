@@ -18,6 +18,7 @@ bash kernel_launch/H100/scripts/run_all.sh [过滤参数...]
 | `run_profiling.py` | 采集编排器。对每个组合：① `nsys profile`(`--capture-range=cudaProfilerApi --capture-range-end=stop --cuda-graph-trace=node`) 运行 `worker.py`(传入 `--batch-size`)；② `nsys export` 导出 SQLite；③ 调 `analyze_nsys.py` 解析指标 JSON；④ 将 `.nsys-rep` 与 `.sqlite` **都压缩**进 `results/nsys/` 并删原始大文件。已有指标 JSON 的组合自动跳过（可重入）。 |
 | `analyze_nsys.py` | 离线分析。采集范围已限定在被测 generate,直接统计库内全部：**gpu_busy(区间并集)、gpu_bubble_ratio(核心)**、`unhidden_launch_api_ms`、`other_host_idle_ms`、kernel 数、launch 类 API 次数/开销、launch 占比(诊断)、Top-5 kernel;e2e 取主机 API 时间跨度。 |
 | `summarize.py` | 汇总。读取全部 `results/metrics/*.json`，生成 `results/metrics/summary.csv` 与 `results/README.md`（每模型指标表 + **eager→cudagraph 对比表(Δbubble/加速)** + 各组合 Top-5 kernel）。 |
+| `plot_prefill_slice.py` | 从 nsys sqlite/sqlite.gz 中按 prefill-only slice 重算 fig3 数据，默认输出 PNG 到 `assets/figs/`，并打印 prompt=8k 的 prefill 表格；需要 PDF 时显式加 `--pdf`。 |
 | `run_all.sh` | 一键驱动：按 `--models` 过滤下载被选模型（无过滤时下载全部配置模型）→ 跑采集 → 汇总。环境变量 `SGL_PY` 可指定 SGLang 解释器（默认 `~/envs/sgl_env/bin/python`）。 |
 | `remote_bootstrap.sh` | 裸实例引导：缺失时按 `envs/envs.md` 建 `sgl_env`，验证 SGLang 可导入，再调 `run_all.sh`。 |
 

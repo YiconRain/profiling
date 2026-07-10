@@ -1,0 +1,78 @@
+{
+  "model": "Qwen3-30B-A3B",
+  "mode": "cudagraph",
+  "case": "bs8_p16_d512",
+  "prompt_len": 16,
+  "decode_len": 512,
+  "batch_size": 8,
+  "e2e_ns": 2655607306,
+  "e2e_ms": 2655.607306,
+  "gpu_busy_ns": 2423229439,
+  "gpu_busy_ms": 2423.229439,
+  "gpu_bubble_ns": 232377867,
+  "gpu_bubble_ms": 232.377867,
+  "gpu_bubble_ratio": 0.0875046044929054,
+  "unhidden_launch_api_ns": 41192102,
+  "unhidden_launch_api_ms": 41.192102,
+  "unhidden_launch_api_pct": 1.551136792963771,
+  "other_host_idle_ns": 191185765,
+  "other_host_idle_ms": 191.185765,
+  "other_host_idle_pct": 7.199323656326769,
+  "total_kernels": 453458,
+  "total_kernel_gpu_ns": 2426844218,
+  "total_kernel_gpu_ms": 2426.844218,
+  "launch_count": 8929,
+  "launch_overhead_ns": 489534144,
+  "launch_overhead_ms": 489.534144,
+  "launch_overhead_pct": 18.433980916303444,
+  "launch_by_api": {
+    "cuLaunchKernelEx": {
+      "count": 516,
+      "overhead_ns": 2211022
+    },
+    "cudaGraphLaunch_v10000": {
+      "count": 561,
+      "overhead_ns": 448109889
+    },
+    "cudaLaunchKernelExC_v11060": {
+      "count": 1073,
+      "overhead_ns": 5074079
+    },
+    "cudaLaunchKernel_v7000": {
+      "count": 6779,
+      "overhead_ns": 34139154
+    }
+  },
+  "top5_kernels": [
+    {
+      "name": "fused_moe_kernel",
+      "count": 49248,
+      "gpu_ns": 871338984,
+      "gpu_ms": 871.338984
+    },
+    {
+      "name": "BatchPrefillWithPagedKVCacheKernel",
+      "count": 24624,
+      "gpu_ns": 254949340,
+      "gpu_ms": 254.94934
+    },
+    {
+      "name": "nvjet_sm90_tst_64x8_64x16_4x1_v_bz_TNT",
+      "count": 24576,
+      "gpu_ns": 238298893,
+      "gpu_ms": 238.298893
+    },
+    {
+      "name": "nvjet_sm90_tst_64x8_64x16_4x1_v_bz_splitK_TNT",
+      "count": 24576,
+      "gpu_ns": 204710170,
+      "gpu_ms": 204.71017
+    },
+    {
+      "name": "kernel_cutlass_kernel_flashinfernormkernelsfused_add_rmsnormFusedAddRMSNormKernel_object_at__tensorptrbf16gmemalign128o204820481_tensorptrbf16gmemalign128o204820481_tensorptrbf16gmemalign_0",
+      "count": 49152,
+      "gpu_ns": 124963589,
+      "gpu_ms": 124.963589
+    }
+  ]
+}

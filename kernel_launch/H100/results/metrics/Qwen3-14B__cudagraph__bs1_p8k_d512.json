@@ -1,0 +1,78 @@
+{
+  "model": "Qwen3-14B",
+  "mode": "cudagraph",
+  "case": "bs1_p8k_d512",
+  "prompt_len": 8192,
+  "decode_len": 512,
+  "batch_size": 1,
+  "e2e_ns": 6412329632,
+  "e2e_ms": 6412.329632,
+  "gpu_busy_ns": 6238304222,
+  "gpu_busy_ms": 6238.304222,
+  "gpu_bubble_ns": 174025410,
+  "gpu_bubble_ms": 174.02541,
+  "gpu_bubble_ratio": 0.02713918653394642,
+  "unhidden_launch_api_ns": 64098600,
+  "unhidden_launch_api_ms": 64.0986,
+  "unhidden_launch_api_pct": 0.9996148619703398,
+  "other_host_idle_ns": 109926810,
+  "other_host_idle_ms": 109.92681,
+  "other_host_idle_pct": 1.7143037914243022,
+  "total_kernels": 297403,
+  "total_kernel_gpu_ns": 6273766621,
+  "total_kernel_gpu_ms": 6273.766621,
+  "launch_count": 8929,
+  "launch_overhead_ns": 613483594,
+  "launch_overhead_ms": 613.483594,
+  "launch_overhead_pct": 9.567249801670833,
+  "launch_by_api": {
+    "cuLaunchKernelEx": {
+      "count": 516,
+      "overhead_ns": 3594872
+    },
+    "cudaGraphLaunch_v10000": {
+      "count": 553,
+      "overhead_ns": 542115468
+    },
+    "cudaLaunchKernelExC_v11060": {
+      "count": 1105,
+      "overhead_ns": 9011754
+    },
+    "cudaLaunchKernel_v7000": {
+      "count": 6755,
+      "overhead_ns": 58761500
+    }
+  },
+  "top5_kernels": [
+    {
+      "name": "nvjet_sm90_tst_384x8_64x4_4x1_v_bz_TNT",
+      "count": 20473,
+      "gpu_ns": 2482304792,
+      "gpu_ms": 2482.304792
+    },
+    {
+      "name": "nvjet_sm90_tst_128x8_64x12_4x1_v_bz_splitK_TNT",
+      "count": 20473,
+      "gpu_ns": 1261224765,
+      "gpu_ms": 1261.224765
+    },
+    {
+      "name": "nvjet_sm90_tst_64x8_64x16_2x1_v_bz_splitK_TNT",
+      "count": 20473,
+      "gpu_ns": 544911358,
+      "gpu_ms": 544.911358
+    },
+    {
+      "name": "BatchPrefillWithPagedKVCacheKernel",
+      "count": 20513,
+      "gpu_ns": 539482165,
+      "gpu_ms": 539.482165
+    },
+    {
+      "name": "nvjet_sm90_tst_64x8_64x16_4x1_v_bz_TNT",
+      "count": 20473,
+      "gpu_ns": 415558835,
+      "gpu_ms": 415.558835
+    }
+  ]
+}

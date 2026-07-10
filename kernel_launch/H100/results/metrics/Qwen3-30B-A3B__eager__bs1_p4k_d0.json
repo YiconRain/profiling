@@ -1,0 +1,82 @@
+{
+  "model": "Qwen3-30B-A3B",
+  "mode": "eager",
+  "case": "bs1_p4k_d0",
+  "prompt_len": 4096,
+  "decode_len": 0,
+  "batch_size": 1,
+  "e2e_ns": 135362782,
+  "e2e_ms": 135.362782,
+  "gpu_busy_ns": 92661698,
+  "gpu_busy_ms": 92.661698,
+  "gpu_bubble_ns": 42701084,
+  "gpu_bubble_ms": 42.701084,
+  "gpu_bubble_ratio": 0.3154566075629267,
+  "unhidden_launch_api_ns": 3203389,
+  "unhidden_launch_api_ms": 3.203389,
+  "unhidden_launch_api_pct": 2.366521249541104,
+  "other_host_idle_ns": 39497695,
+  "other_host_idle_ms": 39.497695,
+  "other_host_idle_pct": 29.179139506751568,
+  "total_kernels": 1674,
+  "total_kernel_gpu_ns": 91705732,
+  "total_kernel_gpu_ms": 91.705732,
+  "launch_count": 1049,
+  "launch_overhead_ns": 5756667,
+  "launch_overhead_ms": 5.756667,
+  "launch_overhead_pct": 4.252769420770327,
+  "launch_by_api": {
+    "cuLaunchKernel": {
+      "count": 48,
+      "overhead_ns": 180736
+    },
+    "cuLaunchKernelEx": {
+      "count": 246,
+      "overhead_ns": 1109075
+    },
+    "cudaGraphLaunch_v10000": {
+      "count": 49,
+      "overhead_ns": 1490764
+    },
+    "cudaLaunchKernelExC_v11060": {
+      "count": 436,
+      "overhead_ns": 1804345
+    },
+    "cudaLaunchKernel_v7000": {
+      "count": 270,
+      "overhead_ns": 1171747
+    }
+  },
+  "top5_kernels": [
+    {
+      "name": "fused_moe_kernel",
+      "count": 192,
+      "gpu_ns": 37792049,
+      "gpu_ms": 37.792049
+    },
+    {
+      "name": "BatchPrefillWithPagedKVCacheKernel",
+      "count": 96,
+      "gpu_ns": 26342254,
+      "gpu_ms": 26.342254
+    },
+    {
+      "name": "nvjet_sm90_tst_320x128_64x3_1x2_h_bz_coopB_TNT",
+      "count": 48,
+      "gpu_ns": 6099251,
+      "gpu_ms": 6.099251
+    },
+    {
+      "name": "nvjet_sm90_tst_256x128_64x4_1x2_h_bz_coopA_TNT",
+      "count": 48,
+      "gpu_ns": 4774009,
+      "gpu_ms": 4.774009
+    },
+    {
+      "name": "moe_sum_reduce_warp_per_token_vec_kernel",
+      "count": 48,
+      "gpu_ns": 2499996,
+      "gpu_ms": 2.499996
+    }
+  ]
+}

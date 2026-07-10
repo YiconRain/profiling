@@ -5,6 +5,8 @@ models/
 kernel_launch/**/results/_work/
 kernel_launch/**/results/nsys/
 kernel_launch/**/logs/
+*.log
+nohup.out
 *.nsys-rep
 *.nsys-rep.gz
 *.sqlite
@@ -22,4 +24,5 @@ __pycache__/
 # Local scratch reports/plots.
 kernel_launch/figs/
 kernel_launch/report.md
+kernel_launch/report*.md
 old_qwen3_5/

@@ -1,0 +1,78 @@
+{
+  "model": "Qwen3.5-27B",
+  "mode": "cudagraph",
+  "case": "bs1_p8k_d512",
+  "prompt_len": 8192,
+  "decode_len": 512,
+  "batch_size": 1,
+  "e2e_ns": 10907702524,
+  "e2e_ms": 10907.702524,
+  "gpu_busy_ns": 10770763032,
+  "gpu_busy_ms": 10770.763032,
+  "gpu_bubble_ns": 136939492,
+  "gpu_bubble_ms": 136.939492,
+  "gpu_bubble_ratio": 0.012554384546030181,
+  "unhidden_launch_api_ns": 7723179,
+  "unhidden_launch_api_ms": 7.723179,
+  "unhidden_launch_api_pct": 0.0708048187325135,
+  "other_host_idle_ns": 129216313,
+  "other_host_idle_ms": 129.216313,
+  "other_host_idle_pct": 1.1846336358705045,
+  "total_kernels": 503734,
+  "total_kernel_gpu_ns": 12226814246,
+  "total_kernel_gpu_ms": 12226.814246,
+  "launch_count": 10897,
+  "launch_overhead_ns": 851369053,
+  "launch_overhead_ms": 851.369053,
+  "launch_overhead_pct": 7.805209677535206,
+  "launch_by_api": {
+    "cuLaunchKernelEx": {
+      "count": 1316,
+      "overhead_ns": 131990033
+    },
+    "cudaGraphLaunch_v10000": {
+      "count": 512,
+      "overhead_ns": 530615088
+    },
+    "cudaLaunchKernelExC_v11060": {
+      "count": 1282,
+      "overhead_ns": 81272787
+    },
+    "cudaLaunchKernel_v7000": {
+      "count": 7787,
+      "overhead_ns": 107491145
+    }
+  },
+  "top5_kernels": [
+    {
+      "name": "nvjet_sm90_tst_384x8_64x4_4x1_v_bz_TNT",
+      "count": 32754,
+      "gpu_ns": 3967235387,
+      "gpu_ms": 3967.235387
+    },
+    {
+      "name": "nvjet_sm90_tst_128x8_64x12_4x1_v_bz_splitK_TNT",
+      "count": 32753,
+      "gpu_ns": 2025972545,
+      "gpu_ms": 2025.972545
+    },
+    {
+      "name": "nvjet_sm90_tst_128x8_64x12_2x1_v_bz_TNT",
+      "count": 24566,
+      "gpu_ns": 1397169323,
+      "gpu_ms": 1397.169323
+    },
+    {
+      "name": "nvjet_sm90_tst_64x8_64x16_2x1_v_bz_splitK_TNT",
+      "count": 24566,
+      "gpu_ns": 1257744650,
+      "gpu_ms": 1257.74465
+    },
+    {
+      "name": "nvjet_sm90_tst_64x8_64x16_4x1_v_bz_TNT",
+      "count": 32754,
+      "gpu_ns": 811122452,
+      "gpu_ms": 811.122452
+    }
+  ]
+}

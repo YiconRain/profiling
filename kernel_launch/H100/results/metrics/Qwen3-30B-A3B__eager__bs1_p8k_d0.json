@@ -1,0 +1,82 @@
+{
+  "model": "Qwen3-30B-A3B",
+  "mode": "eager",
+  "case": "bs1_p8k_d0",
+  "prompt_len": 8192,
+  "decode_len": 0,
+  "batch_size": 1,
+  "e2e_ns": 261983360,
+  "e2e_ms": 261.98336,
+  "gpu_busy_ns": 218429634,
+  "gpu_busy_ms": 218.429634,
+  "gpu_bubble_ns": 43553726,
+  "gpu_bubble_ms": 43.553726,
+  "gpu_bubble_ratio": 0.16624615395420533,
+  "unhidden_launch_api_ns": 3246395,
+  "unhidden_launch_api_ms": 3.246395,
+  "unhidden_launch_api_pct": 1.2391607619659508,
+  "other_host_idle_ns": 40307331,
+  "other_host_idle_ms": 40.307331,
+  "other_host_idle_pct": 15.385454633454582,
+  "total_kernels": 1674,
+  "total_kernel_gpu_ns": 216403205,
+  "total_kernel_gpu_ms": 216.403205,
+  "launch_count": 1049,
+  "launch_overhead_ns": 5961195,
+  "launch_overhead_ms": 5.961195,
+  "launch_overhead_pct": 2.275409781751024,
+  "launch_by_api": {
+    "cuLaunchKernel": {
+      "count": 48,
+      "overhead_ns": 199498
+    },
+    "cuLaunchKernelEx": {
+      "count": 246,
+      "overhead_ns": 1092985
+    },
+    "cudaGraphLaunch_v10000": {
+      "count": 49,
+      "overhead_ns": 1718261
+    },
+    "cudaLaunchKernelExC_v11060": {
+      "count": 436,
+      "overhead_ns": 1784994
+    },
+    "cudaLaunchKernel_v7000": {
+      "count": 270,
+      "overhead_ns": 1165457
+    }
+  },
+  "top5_kernels": [
+    {
+      "name": "BatchPrefillWithPagedKVCacheKernel",
+      "count": 96,
+      "gpu_ns": 94473811,
+      "gpu_ms": 94.473811
+    },
+    {
+      "name": "fused_moe_kernel",
+      "count": 192,
+      "gpu_ns": 68880450,
+      "gpu_ms": 68.88045
+    },
+    {
+      "name": "nvjet_sm90_tst_320x128_64x3_1x2_h_bz_coopB_TNT",
+      "count": 48,
+      "gpu_ns": 12531464,
+      "gpu_ms": 12.531464
+    },
+    {
+      "name": "nvjet_sm90_tst_256x128_64x4_1x2_h_bz_coopA_TNT",
+      "count": 48,
+      "gpu_ns": 9672972,
+      "gpu_ms": 9.672972
+    },
+    {
+      "name": "moe_sum_reduce_warp_per_token_vec_kernel",
+      "count": 48,
+      "gpu_ns": 4892567,
+      "gpu_ms": 4.892567
+    }
+  ]
+}

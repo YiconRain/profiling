@@ -1,0 +1,82 @@
+{
+  "model": "Qwen3-30B-A3B",
+  "mode": "eager",
+  "case": "bs16_p16_d512",
+  "prompt_len": 16,
+  "decode_len": 512,
+  "batch_size": 16,
+  "e2e_ns": 29188100527,
+  "e2e_ms": 29188.100527,
+  "gpu_busy_ns": 2626728243,
+  "gpu_busy_ms": 2626.728243,
+  "gpu_bubble_ns": 26561372284,
+  "gpu_bubble_ms": 26561.372284,
+  "gpu_bubble_ratio": 0.9100068796676171,
+  "unhidden_launch_api_ns": 2361662829,
+  "unhidden_launch_api_ms": 2361.662829,
+  "unhidden_launch_api_pct": 8.091183689104334,
+  "other_host_idle_ns": 24199709455,
+  "other_host_idle_ms": 24199.709455,
+  "other_host_idle_pct": 82.90950427765738,
+  "total_kernels": 446554,
+  "total_kernel_gpu_ns": 2625284757,
+  "total_kernel_gpu_ms": 2625.284757,
+  "launch_count": 445929,
+  "launch_overhead_ns": 2674106396,
+  "launch_overhead_ms": 2674.106396,
+  "launch_overhead_pct": 9.161632129937196,
+  "launch_by_api": {
+    "cuLaunchKernel": {
+      "count": 24576,
+      "overhead_ns": 145300245
+    },
+    "cuLaunchKernelEx": {
+      "count": 123908,
+      "overhead_ns": 728519146
+    },
+    "cudaGraphLaunch_v10000": {
+      "count": 49,
+      "overhead_ns": 2280381
+    },
+    "cudaLaunchKernelExC_v11060": {
+      "count": 192817,
+      "overhead_ns": 1158925476
+    },
+    "cudaLaunchKernel_v7000": {
+      "count": 104579,
+      "overhead_ns": 639081148
+    }
+  },
+  "top5_kernels": [
+    {
+      "name": "fused_moe_kernel",
+      "count": 49248,
+      "gpu_ns": 972156424,
+      "gpu_ms": 972.156424
+    },
+    {
+      "name": "BatchPrefillWithPagedKVCacheKernel",
+      "count": 24624,
+      "gpu_ns": 268735042,
+      "gpu_ms": 268.735042
+    },
+    {
+      "name": "nvjet_sm90_tst_64x16_64x16_4x1_v_bz_TNT",
+      "count": 24576,
+      "gpu_ns": 246926916,
+      "gpu_ms": 246.926916
+    },
+    {
+      "name": "nvjet_sm90_tst_64x16_64x16_4x1_v_bz_splitK_TNT",
+      "count": 24576,
+      "gpu_ns": 211739638,
+      "gpu_ms": 211.739638
+    },
+    {
+      "name": "nvjet_sm90_tst_64x8_64x16_2x2_h_bz_TNT",
+      "count": 24576,
+      "gpu_ns": 128047809,
+      "gpu_ms": 128.047809
+    }
+  ]
+}

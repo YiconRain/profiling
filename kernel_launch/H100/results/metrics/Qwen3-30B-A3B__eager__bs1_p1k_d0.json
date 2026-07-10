@@ -1,0 +1,82 @@
+{
+  "model": "Qwen3-30B-A3B",
+  "mode": "eager",
+  "case": "bs1_p1k_d0",
+  "prompt_len": 1024,
+  "decode_len": 0,
+  "batch_size": 1,
+  "e2e_ns": 71536222,
+  "e2e_ms": 71.536222,
+  "gpu_busy_ns": 29716685,
+  "gpu_busy_ms": 29.716685,
+  "gpu_bubble_ns": 41819537,
+  "gpu_bubble_ms": 41.819537,
+  "gpu_bubble_ratio": 0.5845924740056863,
+  "unhidden_launch_api_ns": 3128906,
+  "unhidden_launch_api_ms": 3.128906,
+  "unhidden_launch_api_pct": 4.373876495742255,
+  "other_host_idle_ns": 38690631,
+  "other_host_idle_ms": 38.690631,
+  "other_host_idle_pct": 54.08537090482637,
+  "total_kernels": 1674,
+  "total_kernel_gpu_ns": 29544400,
+  "total_kernel_gpu_ms": 29.5444,
+  "launch_count": 1049,
+  "launch_overhead_ns": 5346598,
+  "launch_overhead_ms": 5.346598,
+  "launch_overhead_pct": 7.473973115326108,
+  "launch_by_api": {
+    "cuLaunchKernel": {
+      "count": 48,
+      "overhead_ns": 176811
+    },
+    "cuLaunchKernelEx": {
+      "count": 246,
+      "overhead_ns": 1023744
+    },
+    "cudaGraphLaunch_v10000": {
+      "count": 49,
+      "overhead_ns": 1303080
+    },
+    "cudaLaunchKernelExC_v11060": {
+      "count": 436,
+      "overhead_ns": 1730350
+    },
+    "cudaLaunchKernel_v7000": {
+      "count": 270,
+      "overhead_ns": 1112613
+    }
+  },
+  "top5_kernels": [
+    {
+      "name": "fused_moe_kernel",
+      "count": 192,
+      "gpu_ns": 17348170,
+      "gpu_ms": 17.34817
+    },
+    {
+      "name": "BatchPrefillWithPagedKVCacheKernel",
+      "count": 96,
+      "gpu_ns": 3059163,
+      "gpu_ms": 3.059163
+    },
+    {
+      "name": "nvjet_sm90_tst_320x128_64x3_1x2_h_bz_coopB_TNT",
+      "count": 48,
+      "gpu_ns": 1539069,
+      "gpu_ms": 1.539069
+    },
+    {
+      "name": "nvjet_sm90_tst_128x128_64x6_2x1_v_bz_TNT",
+      "count": 48,
+      "gpu_ns": 1163741,
+      "gpu_ms": 1.163741
+    },
+    {
+      "name": "moe_sum_reduce_warp_per_token_vec_kernel",
+      "count": 48,
+      "gpu_ns": 612158,
+      "gpu_ms": 0.612158
+    }
+  ]
+}

@@ -1,0 +1,78 @@
+{
+  "model": "Qwen3-14B",
+  "mode": "eager",
+  "case": "bs4_p16_d512",
+  "prompt_len": 16,
+  "decode_len": 512,
+  "batch_size": 4,
+  "e2e_ns": 7720469284,
+  "e2e_ms": 7720.469284,
+  "gpu_busy_ns": 5631803443,
+  "gpu_busy_ms": 5631.803443,
+  "gpu_bubble_ns": 2088665841,
+  "gpu_bubble_ms": 2088.665841,
+  "gpu_bubble_ratio": 0.2705361247053438,
+  "unhidden_launch_api_ns": 340120707,
+  "unhidden_launch_api_ms": 340.120707,
+  "unhidden_launch_api_pct": 4.405440841593276,
+  "other_host_idle_ns": 1748545134,
+  "other_host_idle_ms": 1748.545134,
+  "other_host_idle_pct": 22.6481716289411,
+  "total_kernels": 312014,
+  "total_kernel_gpu_ns": 5706534111,
+  "total_kernel_gpu_ms": 5706.534111,
+  "launch_count": 311653,
+  "launch_overhead_ns": 1219784799,
+  "launch_overhead_ms": 1219.784799,
+  "launch_overhead_pct": 15.799360817714769,
+  "launch_by_api": {
+    "cuLaunchKernelEx": {
+      "count": 82948,
+      "overhead_ns": 334541422
+    },
+    "cudaGraphLaunch_v10000": {
+      "count": 41,
+      "overhead_ns": 911773
+    },
+    "cudaLaunchKernelExC_v11060": {
+      "count": 201937,
+      "overhead_ns": 770874754
+    },
+    "cudaLaunchKernel_v7000": {
+      "count": 26727,
+      "overhead_ns": 113456850
+    }
+  },
+  "top5_kernels": [
+    {
+      "name": "nvjet_sm90_tst_384x8_64x4_4x1_v_bz_TNT",
+      "count": 20480,
+      "gpu_ns": 2470747450,
+      "gpu_ms": 2470.74745
+    },
+    {
+      "name": "nvjet_sm90_tst_128x8_64x12_4x1_v_bz_splitK_TNT",
+      "count": 20480,
+      "gpu_ns": 1279414171,
+      "gpu_ms": 1279.414171
+    },
+    {
+      "name": "nvjet_sm90_tst_64x8_64x16_2x1_v_bz_splitK_TNT",
+      "count": 20480,
+      "gpu_ns": 557902003,
+      "gpu_ms": 557.902003
+    },
+    {
+      "name": "nvjet_sm90_tst_64x8_64x16_4x1_v_bz_TNT",
+      "count": 20480,
+      "gpu_ns": 418883829,
+      "gpu_ms": 418.883829
+    },
+    {
+      "name": "nvjet_sm90_tst_384x8_64x4_2x1_v_bz_TNT",
+      "count": 513,
+      "gpu_ns": 261780560,
+      "gpu_ms": 261.78056
+    }
+  ]
+}

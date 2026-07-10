@@ -1,0 +1,78 @@
+{
+  "model": "Qwen3.5-27B",
+  "mode": "cudagraph",
+  "case": "bs1_p1k_d0",
+  "prompt_len": 1024,
+  "decode_len": 0,
+  "batch_size": 1,
+  "e2e_ns": 107063192,
+  "e2e_ms": 107.063192,
+  "gpu_busy_ns": 88643664,
+  "gpu_busy_ms": 88.643664,
+  "gpu_bubble_ns": 18419528,
+  "gpu_bubble_ms": 18.419528,
+  "gpu_bubble_ratio": 0.17204351613204283,
+  "unhidden_launch_api_ns": 2810644,
+  "unhidden_launch_api_ms": 2.810644,
+  "unhidden_launch_api_pct": 2.6252196926839244,
+  "other_host_idle_ns": 15608884,
+  "other_host_idle_ms": 15.608884,
+  "other_host_idle_pct": 14.57913192052036,
+  "total_kernels": 1923,
+  "total_kernel_gpu_ns": 89093711,
+  "total_kernel_gpu_ms": 89.093711,
+  "launch_count": 1746,
+  "launch_overhead_ns": 12363747,
+  "launch_overhead_ms": 12.363747,
+  "launch_overhead_pct": 11.54808367753504,
+  "launch_by_api": {
+    "cuLaunchKernelEx": {
+      "count": 805,
+      "overhead_ns": 5102691
+    },
+    "cudaGraphLaunch_v10000": {
+      "count": 1,
+      "overhead_ns": 1083336
+    },
+    "cudaLaunchKernelExC_v11060": {
+      "count": 308,
+      "overhead_ns": 2243554
+    },
+    "cudaLaunchKernel_v7000": {
+      "count": 632,
+      "overhead_ns": 3934166
+    }
+  },
+  "top5_kernels": [
+    {
+      "name": "nvjet_sm90_tst_320x128_64x3_1x2_h_bz_coopB_TNT",
+      "count": 192,
+      "gpu_ns": 50771980,
+      "gpu_ms": 50.77198
+    },
+    {
+      "name": "nvjet_sm90_tst_256x128_64x4_1x2_h_bz_coopA_TNT",
+      "count": 48,
+      "gpu_ns": 10442270,
+      "gpu_ms": 10.44227
+    },
+    {
+      "name": "elementwise_kernel",
+      "count": 343,
+      "gpu_ns": 3218048,
+      "gpu_ms": 3.218048
+    },
+    {
+      "name": "nvjet_sm90_tst_176x128_64x5_1x2_h_bz_TNN",
+      "count": 16,
+      "gpu_ns": 3023456,
+      "gpu_ms": 3.023456
+    },
+    {
+      "name": "act_and_mul_kernel",
+      "count": 76,
+      "gpu_ns": 2020127,
+      "gpu_ms": 2.020127
+    }
+  ]
+}

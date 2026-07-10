@@ -1,0 +1,78 @@
+{
+  "model": "Qwen3-14B",
+  "mode": "eager",
+  "case": "bs1_p8k_d512",
+  "prompt_len": 8192,
+  "decode_len": 512,
+  "batch_size": 1,
+  "e2e_ns": 6998733987,
+  "e2e_ms": 6998.733987,
+  "gpu_busy_ns": 6246607346,
+  "gpu_busy_ms": 6246.607346,
+  "gpu_bubble_ns": 752126641,
+  "gpu_bubble_ms": 752.126641,
+  "gpu_bubble_ratio": 0.10746609921123725,
+  "unhidden_launch_api_ns": 123919720,
+  "unhidden_launch_api_ms": 123.91972,
+  "unhidden_launch_api_pct": 1.7706019435826288,
+  "other_host_idle_ns": 628206921,
+  "other_host_idle_ms": 628.206921,
+  "other_host_idle_pct": 8.976007977541096,
+  "total_kernels": 295970,
+  "total_kernel_gpu_ns": 6323752363,
+  "total_kernel_gpu_ms": 6323.752363,
+  "launch_count": 295649,
+  "launch_overhead_ns": 988313426,
+  "launch_overhead_ms": 988.313426,
+  "launch_overhead_pct": 14.121317195878158,
+  "launch_by_api": {
+    "cuLaunchKernelEx": {
+      "count": 82948,
+      "overhead_ns": 290622048
+    },
+    "cudaGraphLaunch_v10000": {
+      "count": 41,
+      "overhead_ns": 1521367
+    },
+    "cudaLaunchKernelExC_v11060": {
+      "count": 206417,
+      "overhead_ns": 667073771
+    },
+    "cudaLaunchKernel_v7000": {
+      "count": 6243,
+      "overhead_ns": 29096240
+    }
+  },
+  "top5_kernels": [
+    {
+      "name": "nvjet_sm90_tst_384x8_64x4_4x1_v_bz_TNT",
+      "count": 20480,
+      "gpu_ns": 2465544462,
+      "gpu_ms": 2465.544462
+    },
+    {
+      "name": "nvjet_sm90_tst_128x8_64x12_4x1_v_bz_splitK_TNT",
+      "count": 20480,
+      "gpu_ns": 1269398244,
+      "gpu_ms": 1269.398244
+    },
+    {
+      "name": "nvjet_sm90_tst_64x8_64x16_2x1_v_bz_splitK_TNT",
+      "count": 20480,
+      "gpu_ns": 549762311,
+      "gpu_ms": 549.762311
+    },
+    {
+      "name": "BatchPrefillWithPagedKVCacheKernel",
+      "count": 20520,
+      "gpu_ns": 541260405,
+      "gpu_ms": 541.260405
+    },
+    {
+      "name": "nvjet_sm90_tst_64x8_64x16_4x1_v_bz_TNT",
+      "count": 20480,
+      "gpu_ns": 414535668,
+      "gpu_ms": 414.535668
+    }
+  ]
+}

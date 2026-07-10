@@ -1,0 +1,78 @@
+{
+  "model": "Qwen3-8B",
+  "mode": "cudagraph",
+  "case": "bs16_p16_d512",
+  "prompt_len": 16,
+  "decode_len": 512,
+  "batch_size": 16,
+  "e2e_ns": 3610561021,
+  "e2e_ms": 3610.561021,
+  "gpu_busy_ns": 3501484948,
+  "gpu_busy_ms": 3501.484948,
+  "gpu_bubble_ns": 109076073,
+  "gpu_bubble_ms": 109.076073,
+  "gpu_bubble_ratio": 0.030210283766313333,
+  "unhidden_launch_api_ns": 9037122,
+  "unhidden_launch_api_ms": 9.037122,
+  "unhidden_launch_api_pct": 0.250296891464724,
+  "other_host_idle_ns": 100038951,
+  "other_host_idle_ms": 100.038951,
+  "other_host_idle_pct": 2.7707314851666096,
+  "total_kernels": 287230,
+  "total_kernel_gpu_ns": 3538232100,
+  "total_kernel_gpu_ms": 3538.2321,
+  "launch_count": 8925,
+  "launch_overhead_ns": 330218143,
+  "launch_overhead_ms": 330.218143,
+  "launch_overhead_pct": 9.145895640022752,
+  "launch_by_api": {
+    "cuLaunchKernelEx": {
+      "count": 516,
+      "overhead_ns": 2034350
+    },
+    "cudaGraphLaunch_v10000": {
+      "count": 549,
+      "overhead_ns": 289753062
+    },
+    "cudaLaunchKernelExC_v11060": {
+      "count": 1097,
+      "overhead_ns": 5053670
+    },
+    "cudaLaunchKernel_v7000": {
+      "count": 6763,
+      "overhead_ns": 33377061
+    }
+  },
+  "top5_kernels": [
+    {
+      "name": "nvjet_sm90_tst_192x16_64x8_2x1_v_bz_TNT",
+      "count": 18432,
+      "gpu_ns": 1285680604,
+      "gpu_ms": 1285.680604
+    },
+    {
+      "name": "nvjet_sm90_tst_64x16_64x16_2x1_v_bz_splitK_TNT",
+      "count": 18432,
+      "gpu_ns": 677418845,
+      "gpu_ms": 677.418845
+    },
+    {
+      "name": "nvjet_sm90_tst_64x16_64x16_4x1_v_bz_TNT",
+      "count": 18432,
+      "gpu_ns": 385239290,
+      "gpu_ms": 385.23929
+    },
+    {
+      "name": "BatchPrefillWithPagedKVCacheKernel",
+      "count": 18468,
+      "gpu_ns": 272510529,
+      "gpu_ms": 272.510529
+    },
+    {
+      "name": "nvjet_sm90_tst_128x16_64x11_4x1_v_bz_splitK_TNT",
+      "count": 18432,
+      "gpu_ns": 256589943,
+      "gpu_ms": 256.589943
+    }
+  ]
+}

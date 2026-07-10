@@ -1,0 +1,78 @@
+{
+  "model": "Qwen3-14B",
+  "mode": "eager",
+  "case": "bs8_p16_d512",
+  "prompt_len": 16,
+  "decode_len": 512,
+  "batch_size": 8,
+  "e2e_ns": 6826862705,
+  "e2e_ms": 6826.862705,
+  "gpu_busy_ns": 5740242559,
+  "gpu_busy_ms": 5740.242559,
+  "gpu_bubble_ns": 1086620146,
+  "gpu_bubble_ms": 1086.620146,
+  "gpu_bubble_ratio": 0.15916830218427544,
+  "unhidden_launch_api_ns": 181278994,
+  "unhidden_launch_api_ms": 181.278994,
+  "unhidden_launch_api_pct": 2.6553777603763895,
+  "other_host_idle_ns": 905341152,
+  "other_host_idle_ms": 905.341152,
+  "other_host_idle_pct": 13.261452458051155,
+  "total_kernels": 312018,
+  "total_kernel_gpu_ns": 5823236914,
+  "total_kernel_gpu_ms": 5823.236914,
+  "launch_count": 311657,
+  "launch_overhead_ns": 1057449917,
+  "launch_overhead_ms": 1057.449917,
+  "launch_overhead_pct": 15.489544212241485,
+  "launch_by_api": {
+    "cuLaunchKernelEx": {
+      "count": 82948,
+      "overhead_ns": 290976499
+    },
+    "cudaGraphLaunch_v10000": {
+      "count": 41,
+      "overhead_ns": 898686
+    },
+    "cudaLaunchKernelExC_v11060": {
+      "count": 201937,
+      "overhead_ns": 667415735
+    },
+    "cudaLaunchKernel_v7000": {
+      "count": 26731,
+      "overhead_ns": 98158997
+    }
+  },
+  "top5_kernels": [
+    {
+      "name": "nvjet_sm90_tst_384x8_64x4_4x1_v_bz_TNT",
+      "count": 20480,
+      "gpu_ns": 2476225224,
+      "gpu_ms": 2476.225224
+    },
+    {
+      "name": "nvjet_sm90_tst_128x8_64x12_4x1_v_bz_splitK_TNT",
+      "count": 20480,
+      "gpu_ns": 1289070247,
+      "gpu_ms": 1289.070247
+    },
+    {
+      "name": "nvjet_sm90_tst_64x8_64x16_2x1_v_bz_splitK_TNT",
+      "count": 20480,
+      "gpu_ns": 565671783,
+      "gpu_ms": 565.671783
+    },
+    {
+      "name": "nvjet_sm90_tst_64x8_64x16_4x1_v_bz_TNT",
+      "count": 20480,
+      "gpu_ns": 425248167,
+      "gpu_ms": 425.248167
+    },
+    {
+      "name": "nvjet_sm90_tst_384x8_64x4_2x1_v_bz_TNT",
+      "count": 513,
+      "gpu_ns": 262779208,
+      "gpu_ms": 262.779208
+    }
+  ]
+}

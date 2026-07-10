@@ -7,8 +7,10 @@
 
 | 目录 | 说明 |
 |------|------|
+| `assets/figs/` | blog / report 使用的图片资产，统一提交到 GitHub。 |
 | `envs/` | 环境准备与模型下载。`envs.md` 记录 MPK / vLLM / SGLang 三套独立环境的安装方式；`download_models.py` 下载 Qwen3 / Qwen3.5 模型。 |
 | `kernel_launch/H100/` | H100 上的 kernel launch 开销实验（SGLang + FlashInfer，当前实验用 Qwen3 + Qwen3.5 补充模型）。详见其 `README.md`。 |
+| `kernel_launch/blog_kernel_launch.md` | kernel launch / host overhead 分析 blog。 |
 
 > 说明:第一次正式实验(Qwen3.5 系列)的数据已用 git tag **`experiment-1`** 归档;当前 main 为
 > Experiment 2(Qwen3 系列 + Qwen3.5-0.8B/2B/9B/27B 补充模型 + batch 扫描 + GPU bubble 指标)。
