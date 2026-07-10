@@ -166,11 +166,13 @@ gpu_bubble_ms
 
 **Claim2，prefill 则呈现明显的 prompt-dependent 行为。短 prompt 下，实际 GPU work 太少，prefill 中会形成很高的 GPU bubble；但随着 prompt 增长，GEMM/attention 计算变长，这部分固定开销被明显摊薄：Qwen3-8B/14B/Qwen3.5-27B 的 bubble ratio 已经降到 1%-3% 量级。因此 MegaKernel 通过减少 Kernel 的数量来减少 Kernel Launch Overhead + Host Overhead 的 motivation 主要在中小 prompt 下成立。**
 
-联想到之前做的 MPK/vLLM/SGLang 的 TTFT 和 TPOT 性能试验，当时没能解释的亮点，和我们今天观察到的其实是相符的：
+联想到之前做的 MPK/vLLM/SGLang 的 TTFT 和 TPOT 性能试验，当时没能解释的 2。点，和我们今天观察到的其实是相符的：
 - 针对 prefill，`prompt_len=16` 的时候，MPK 确实小有优势，这部分优势很可能就来自于 MegaKernel 对 GPU Bubble 的消解；但可惜 MegaKernel 的 `mbt=16` 设计使得架构优势在 prefill 上迅速衰减，甚至在 `prompt_len=32` 的时候就开始比不过 vLLM/SGLang了。
 - 针对 decode，在我们的实测中，MPK 干不过 vLLM/SGLang CUDA Graph，这同样和我们观察到的 "`CUDA Graph` 已经能有效地降低 Kernel Launch 和 Host Overhead" 这一现象是相符的，
 ![MPK prefill TTFT](../assets/figs/mpk_prefill_ttft_all.png)
 <center> MPK/vLLM/SGLang 的 TTFT 性能</center>
+
+
 ![MPK TPOT](../assets/figs/mpk_tpot_all_models.png)
 <center> MPK/vLLM/SGLang 的 TPOT 性能</center>
 
