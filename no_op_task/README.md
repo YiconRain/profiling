@@ -55,6 +55,8 @@ QWEN3_SPECS = {
 - `worker.py`：在 YiconRain Mirage H100 demo 外包一层实验 harness，负责真实 BS=1、prompt=1、状态重置、CUDA Event 计时和 decode 长度校验。
 - `run_experiments.py`：运行完整矩阵，管理编译、5 次测量、nsys 和 SQLite export。
 - `run_all.sh`：日常入口。
+- `smoke_test.sh`：运行并自动校验 `Qwen3-0.6B + mbr1_mbt1` 的完整测量、编译和 nsys 产物。
+- `command.md`：从 clone、环境安装、模型下载、smoke test 到完整实验的可复制命令。
 - `remote_bootstrap.sh`：已经由用户创建好的 Vast.ai H100 实例上的引导脚本；它不会创建或销毁 Vast.ai 实例。
 
 ## Vast.ai 上的准备
@@ -108,12 +110,10 @@ bash no_op_task/remote_bootstrap.sh
 bash no_op_task/run_all.sh
 ```
 
-先用最小 case 做 smoke test：
+先用最小 case 做完整且自校验的 smoke test：
 
 ```bash
-bash no_op_task/run_all.sh \
-  --models Qwen3-0.6B \
-  --cases mbr1_mbt1
+bash no_op_task/smoke_test.sh
 ```
 
 只打印完整命令而不加载模型：
