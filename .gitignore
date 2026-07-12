@@ -26,3 +26,8 @@ kernel_launch/figs/
 kernel_launch/report.md
 kernel_launch/report*.md
 old_qwen3_5/
+
+# Task-graph runs keep compact JSON/TXT/CSV reports, but generated CUDA,
+# launchers, and logs are local H100 artifacts.
+task_graph/results/**/raw/
+task_graph/results/**/run.log
