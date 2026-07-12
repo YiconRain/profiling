@@ -47,6 +47,8 @@ DEFAULT_DECODE_LENGTH = 128
 DEFAULT_MBT = 8
 DEFAULT_BATCH_SIZE = 1
 DEFAULT_PAGE_SIZE = 4096
+DENSE_QWEN3_PAGE_SIZE = 4096
+DENSE_QWEN3_MAX_NUM_PAGES = 16
 
 LAYER_RE = re.compile(r"(?:^|_)layer_(\d+)(?:_|$)")
 TASK_ENUM_RE = re.compile(r"enum\s+TaskType\s*\{(.*?)\};", re.DOTALL)
@@ -171,6 +173,48 @@ def auto_max_num_pages(max_seq_length: int, batch_size: int, page_size: int) -> 
     # final decode step while keeping KV-cache allocation modest.
     pages_per_request = math.ceil(max_seq_length / page_size) + 1
     return pages_per_request * batch_size
+
+
+def resolve_kv_cache_geometry(
+    *,
+    is_moe: bool,
+    max_seq_length: int,
+    batch_size: int,
+    requested_page_size: int,
+    requested_max_num_pages: int | None,
+) -> tuple[int, int, str]:
+    """Resolve cache geometry, including Mirage main's dense-demo constraint.
+
+    demo/qwen3/models/modeling_qwen3.py accepts max_num_pages/page_size in its
+    constructor but currently asserts (16, 4096) inside every attention layer.
+    Use that required geometry for dense models until the upstream assertion is
+    made dynamic.  The separate MoE demo has no such hard-coded assertion.
+    """
+    if not is_moe:
+        if requested_page_size != DENSE_QWEN3_PAGE_SIZE:
+            raise ValueError(
+                "Mirage main's dense Qwen3 H100 model currently requires "
+                f"--page-size {DENSE_QWEN3_PAGE_SIZE}; got {requested_page_size}"
+            )
+        if (
+            requested_max_num_pages is not None
+            and requested_max_num_pages != DENSE_QWEN3_MAX_NUM_PAGES
+        ):
+            raise ValueError(
+                "Mirage main's dense Qwen3 H100 model currently requires "
+                f"--max-num-pages {DENSE_QWEN3_MAX_NUM_PAGES}; got "
+                f"{requested_max_num_pages}"
+            )
+        return (
+            DENSE_QWEN3_PAGE_SIZE,
+            DENSE_QWEN3_MAX_NUM_PAGES,
+            "mirage_main_dense_fixed_16x4096",
+        )
+
+    max_num_pages = requested_max_num_pages or auto_max_num_pages(
+        max_seq_length, batch_size, requested_page_size
+    )
+    return requested_page_size, max_num_pages, "automatic"
 
 
 def validate_scenario(scenario: Scenario) -> None:
@@ -958,18 +1002,28 @@ def run_worker(args: argparse.Namespace) -> int:
     is_moe = model_alias == "Qwen3-30B-A3B"
     prompt_len = int(args._worker_prompt_len)
     max_seq_length = prompt_len + args.decode_len
-    max_num_pages = args.max_num_pages or auto_max_num_pages(
-        max_seq_length, args.max_num_batched_requests, args.page_size
+    page_size, max_num_pages, kv_cache_compatibility = resolve_kv_cache_geometry(
+        is_moe=is_moe,
+        max_seq_length=max_seq_length,
+        batch_size=args.max_num_batched_requests,
+        requested_page_size=args.page_size,
+        requested_max_num_pages=args.max_num_pages,
     )
     scenario = Scenario(
         prompt_len=prompt_len,
         decode_len=args.decode_len,
         mbt=args.mbt,
         batch_size=args.max_num_batched_requests,
-        page_size=args.page_size,
+        page_size=page_size,
         max_num_pages=max_num_pages,
     )
     validate_scenario(scenario)
+    if not is_moe:
+        print(
+            "[compat] Mirage main dense Qwen3 requires KV cache geometry "
+            f"max_num_pages={DENSE_QWEN3_MAX_NUM_PAGES}, "
+            f"page_size={DENSE_QWEN3_PAGE_SIZE}."
+        )
 
     case_dir = Path(args._worker_case_dir).resolve()
     raw_dir = case_dir / "raw"
@@ -1049,6 +1103,7 @@ def run_worker(args: argparse.Namespace) -> int:
         "split_kv_adapter": "upstream_dense_demo"
         if not is_moe
         else "moe_runtime_api_adapter",
+        "kv_cache_compatibility": kv_cache_compatibility,
         "scenario": {
             "prompt_len": scenario.prompt_len,
             "decode_len": scenario.decode_len,

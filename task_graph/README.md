@@ -151,8 +151,8 @@ $HOME/envs/mpk_env/bin/python task_graph/run_task_graph.py \
 | `--decode-len` | `128` | 每个 request 的 decode token 数。 |
 | `--mbt` | `8` | Mirage `max_num_batched_tokens`，即每次图迭代可调度的最大 token 数。 |
 | `--max-num-batched-requests` | `1` | 最大 batch request 数，即 BS。 |
-| `--page-size` | `4096` | KV cache page size。 |
-| `--max-num-pages` | 自动 | 默认按 `ceil(max_seq_length/page_size) * BS` 计算，并每个 request 额外保留一页。 |
+| `--page-size` | `4096` | KV cache page size。Mirage `main` 的稠密 Qwen3 H100 模型当前硬性要求 4096。 |
+| `--max-num-pages` | 稠密模型 `16`；MoE 自动 | Mirage `main` 的稠密 Qwen3 模型内部当前硬编码检查 16 页；Qwen3-30B-A3B 按序列长度自动计算并每个 request 额外保留一页。 |
 | `--mirage-dir` | `$MIRAGE_HOME` 或 `~/envs/mirage` | Mirage 源码目录。 |
 | `--output-dir` | `task_graph/results` | 结果根目录。 |
 | `--graph-only` | 关闭 | 跳过 NVCC 编译和实际执行，仅生成/分析图。 |
@@ -166,6 +166,7 @@ $HOME/envs/mpk_env/bin/python task_graph/run_task_graph.py \
 - `mbt >= max_num_batched_requests`。Decode 阶段每个 request 每轮至少需要一个 token slot。
 - `max_seq_length = prompt_len + decode_len`，由脚本自动计算。
 - 手工设置的 `max_num_pages` 不能小于当前 BS 和最大序列长度的容量需求。
+- Qwen3-0.6B/1.7B/8B/14B 必须使用 `page_size=4096, max_num_pages=16`。这是 Mirage `main` 的 `demo/qwen3/models/modeling_qwen3.py` 当前硬编码约束，脚本会自动应用；不需要手工传参。
 - 脚本检查且只允许一张 compute capability 9.0 GPU，即 H100/Hopper 目标。
 
 ## 5. 输出目录

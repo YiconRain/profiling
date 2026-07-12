@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import unittest
 
-from run_task_graph import analyze_graph, parse_length
+from run_task_graph import analyze_graph, parse_length, resolve_kv_cache_geometry
 
 
 HEADER = r"""
@@ -48,6 +48,30 @@ class AnalyzerTest(unittest.TestCase):
         self.assertEqual(parse_length("1k"), 1024)
         self.assertEqual(parse_length("8K"), 8192)
         self.assertEqual(parse_length("16"), 16)
+
+    def test_dense_qwen3_uses_upstream_fixed_cache_geometry(self) -> None:
+        page_size, max_num_pages, compatibility = resolve_kv_cache_geometry(
+            is_moe=False,
+            max_seq_length=136,
+            batch_size=1,
+            requested_page_size=4096,
+            requested_max_num_pages=None,
+        )
+        self.assertEqual(page_size, 4096)
+        self.assertEqual(max_num_pages, 16)
+        self.assertEqual(compatibility, "mirage_main_dense_fixed_16x4096")
+
+    def test_moe_qwen3_keeps_automatic_cache_geometry(self) -> None:
+        page_size, max_num_pages, compatibility = resolve_kv_cache_geometry(
+            is_moe=True,
+            max_seq_length=8320,
+            batch_size=1,
+            requested_page_size=4096,
+            requested_max_num_pages=None,
+        )
+        self.assertEqual(page_size, 4096)
+        self.assertEqual(max_num_pages, 4)
+        self.assertEqual(compatibility, "automatic")
 
     def test_analyze_split_kv_graph(self) -> None:
         graph = {
