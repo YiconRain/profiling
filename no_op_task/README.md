@@ -42,12 +42,13 @@ QWEN3_SPECS = {
 
 ## Mirage 分支与改动
 
-请使用 `YiconRain/mirage` 的 `no_op_task` 分支。该分支没有修改 MPK task、kernel 或 scheduler 逻辑，只有两处为实验复用/重置服务的 loader 修复：
+请使用 `YiconRain/mirage` 的 `no_op_task` 分支。该分支没有修改 MPK task、kernel 或 scheduler 逻辑，只包含为实验复用/重置和可配置 KV cache 所需的调试修复：
 
 1. 普通 `compile()` 后保存生成扩展中的 `init_request_func`，使 5 次独立 decode 之间可以重置 request 和 page queue。
 2. `load_mpk_kernel()` 重载已编译 kernel 时补上 `paged_kv_indices_snapshot` 这个第 11 个 meta tensor。
+3. Qwen3 H100 demo 不再将 KV cache 强制断言为历史默认值 `16 pages × page_size 4096`，而是校验由 demo 构造器参数实际分配的动态 shape。实验使用的 `page_size=64` 与 H100 attention kernel 的 `KV_TILE_SIZE=64` 兼容。
 
-这两处改动不影响 task graph 数量和算子执行逻辑。
+这些改动不影响 task graph 数量和算子执行逻辑。
 
 ## 目录与脚本
 

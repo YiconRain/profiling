@@ -105,6 +105,16 @@ def check_environment(args: argparse.Namespace) -> None:
             "Mirage is missing the no_op_task compiled-kernel reload fix. "
             "Check out YiconRain/mirage:no_op_task."
         )
+    qwen_model_py = args.mirage_root / "demo/qwen3/models/modeling_qwen3.py"
+    if not qwen_model_py.is_file():
+        raise FileNotFoundError(qwen_model_py)
+    qwen_source = qwen_model_py.read_text()
+    if "assert self.value_cache.shape == self.key_cache.shape" not in qwen_source:
+        raise RuntimeError(
+            "Mirage still hard-codes the historical Qwen3 KV-cache shape "
+            "(16 pages x 4096 tokens). Pull the latest "
+            "YiconRain/mirage:no_op_task branch before running."
+        )
     if not args.dry_run and not args.skip_nsys and shutil.which("nsys") is None:
         raise RuntimeError("nsys is required but was not found on PATH")
     if shutil.which(args.python) is None and not Path(args.python).is_file():

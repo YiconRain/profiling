@@ -53,14 +53,14 @@ git -C "$WORK/mirage" status --short
 Mirage 的预期 commit 为：
 
 ```text
-efb0d3be4b89cc83b42916ba5d81352c8c02b76f
+cec749afa1e2e089b68bfa2c921924ed7e9d4ac2
 ```
 
 可以强制检查：
 
 ```bash
 test "$(git -C "$WORK/mirage" rev-parse HEAD)" = \
-  "efb0d3be4b89cc83b42916ba5d81352c8c02b76f"
+  "cec749afa1e2e089b68bfa2c921924ed7e9d4ac2"
 ```
 
 ## 3. 创建 Python 环境
@@ -147,9 +147,12 @@ grep -n 'self.init_request_func = getattr(mod, "init_request_func")' \
 
 grep -n 'meta_tensors.append(self.meta_tensors\["paged_kv_indices_snapshot"\])' \
   "$WORK/mirage/python/mirage/mpk/persistent_kernel.py"
+
+grep -n 'assert self.value_cache.shape == self.key_cache.shape' \
+  "$WORK/mirage/demo/qwen3/models/modeling_qwen3.py"
 ```
 
-第一个 `grep` 应输出两行，第二个应输出一行。
+第一个 `grep` 应输出两行，后两个应各输出一行。第三个检查确保 Qwen3 demo 不再将 KV cache shape 写死为 `16 × 4096`。
 
 ## 6. 预下载全部模型
 
