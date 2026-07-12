@@ -26,3 +26,8 @@ kernel_launch/figs/
 kernel_launch/report.md
 kernel_launch/report*.md
 old_qwen3_5/
+
+# MPK no-op/over-compilation experiment outputs.  This tree contains compiled
+# CUDA extensions, generated task graphs, model logs, nsys reports, and SQLite
+# exports; copy it off the Vast.ai instance manually instead of committing it.
+no_op_task/artifacts/
